@@ -10,7 +10,7 @@ for y in range(HEIGHT):
   for x in range(WIDTH):
     game_map[y].append('.')
 
-rooms = Room(10)
+rooms = Room(20)
 rooms.drawRooms(game_map)
 
 p = ''

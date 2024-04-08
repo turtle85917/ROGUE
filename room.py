@@ -1,29 +1,30 @@
 from __future__ import annotations
 from random import randint
-import math
 
 WIDTH = 100
 HEIGHT = 40
 
 class Room:
-  __min_width = 10
-  __max_width = 15
+  __min_width = 9
+  __max_width = 12
   __min_height = 3
-  __max_height = 8
+  __max_height = 6
   rooms:list[BinaryRoom] = []
 
   def __init__(self, maxRoom:int):
-    for i in range(maxRoom):
+    for _ in range(maxRoom):
+      count = 0
       while True:
         width = randint(self.__min_width, self.__max_width)
         height = randint(self.__min_height, self.__max_height)
-        left = randint(math.ceil(width / 2), WIDTH - width)
-        top = randint(math.ceil(height / 2), HEIGHT - height)
+        left = randint(0, WIDTH - width)
+        top = randint(0, HEIGHT - height)
         room = BinaryRoom(width, height, left, top)
+        count += 1
+        if count > 100: break # 100번 넘게 방 생성 실패 시, 종료
         if room.inRoom(self.rooms): continue
         else:
           self.rooms.append(room)
-          print(width, height)
           break
 
   def drawRooms(self, game_map:list[list[str]]):
@@ -31,7 +32,7 @@ class Room:
       room.draw(game_map)
 
 class BinaryRoom:
-  trim = -5
+  trim = -6
 
   def __init__(self, width:int, height:int, left:int, top:int):
     self.width = width
@@ -50,7 +51,7 @@ class BinaryRoom:
 
   def inRoom(self, rooms:list[BinaryRoom])->bool:
     for room in rooms:
-      if self.top - self.trim < room.bottom + room.trim and self.bottom + self.trim > room.top - room.trim and\
-        self.left + self.trim < room.right - room.trim and self.right - self.trim > room.left + room.trim:
+      if self.top <= room.bottom - room.trim and self.bottom >= room.top + room.trim and\
+        self.left <= room.right - room.trim and self.right >= room.left + room.trim:
         return True
     return False
