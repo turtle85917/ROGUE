@@ -12,6 +12,7 @@ for y in range(HEIGHT):
 
 rooms = Room(20)
 rooms.drawRooms(game_map)
+rooms.connectRooms(game_map)
 
 p = ''
 for y in range(HEIGHT):

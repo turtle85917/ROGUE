@@ -31,6 +31,22 @@ class Room:
     for room in self.rooms:
       room.draw(game_map)
 
+  def connectRooms(self, game_map:list[list[int]]):
+    connectRooms:list[list[int]] = []
+    for room in self.rooms:
+      costs = list(map(lambda x:(room.left - x.left, room.top - x.top), self.rooms))
+      simpleCosts = list(filter(lambda x:x[1][0] == 0 or x[1][1] == 0, enumerate(costs)))
+      for i, cost in simpleCosts:
+        target = self.rooms[i]
+        x1, y1 = target.calculateCenter()
+        x2, y2 = room.calculateCenter()
+        startPos = (min(x1, x2), min(y1, y2))
+        endPos = (max(x1, x2), max(y1, y2))
+        if cost[0] == 0:
+          for y in range(startPos[1], endPos[1]): game_map[y][x1] = '@'
+        elif cost[1] == 0:
+          for x in range(startPos[0], endPos[0]): game_map[y1][x] = '@'
+
 class BinaryRoom:
   trim = -6
 
@@ -55,3 +71,6 @@ class BinaryRoom:
         self.left <= room.right - room.trim and self.right >= room.left + room.trim:
         return True
     return False
+
+  def calculateCenter(self)->tuple[int,int]:
+    return (self.left + self.right) // 2, (self.top + self.bottom) // 2
