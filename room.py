@@ -1,8 +1,6 @@
 from __future__ import annotations
+from constants import *
 from random import randint
-
-WIDTH = 100
-HEIGHT = 40
 
 class Room:
   __min_width = 9
@@ -27,25 +25,37 @@ class Room:
           self.rooms.append(room)
           break
 
+  def setRooms(self, newRooms:list[BinaryRoom]):
+    self.rooms = newRooms
+
   def drawRooms(self, game_map:list[list[str]]):
     for room in self.rooms:
       room.draw(game_map)
 
   def connectRooms(self, game_map:list[list[int]]):
+    def isPathInRoom(activeRooms:list[BinaryRoom], start_x:int = None, start_y:int = None)->bool:
+      for room in self.rooms:
+        if room in activeRooms: continue
+        if (start_x != None and (room.left <= start_x or start_x <= room.right)) or\
+          (start_y != None and (room.top <= start_y or start_y <= room.bottom)):
+          return False
+      return True
+
     connectRooms:list[list[int]] = []
     for room in self.rooms:
       costs = list(map(lambda x:(room.left - x.left, room.top - x.top), self.rooms))
       simpleCosts = list(filter(lambda x:x[1][0] == 0 or x[1][1] == 0, enumerate(costs)))
       for i, cost in simpleCosts:
         target = self.rooms[i]
+        if room == target: continue
         x1, y1 = target.calculateCenter()
         x2, y2 = room.calculateCenter()
         startPos = (min(x1, x2), min(y1, y2))
         endPos = (max(x1, x2), max(y1, y2))
-        if cost[0] == 0:
-          for y in range(startPos[1], endPos[1]): game_map[y][x1] = '@'
-        elif cost[1] == 0:
-          for x in range(startPos[0], endPos[0]): game_map[y1][x] = '@'
+        if cost[0] == 0 and not isPathInRoom([room, target], start_y=startPos[1]):
+          for y in range(startPos[1], endPos[1]): game_map[y][startPos[0]] = '!'
+        if cost[1] == 0 and not isPathInRoom([room, target], start_x=startPos[0]):
+          for x in range(startPos[0], endPos[0]): game_map[startPos[1]][x] = '!'
 
 class BinaryRoom:
   trim = -6

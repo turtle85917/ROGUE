@@ -1,16 +1,14 @@
-from room import Room
+from room import Room, BinaryRoom
+from constants import *
 
 game_map = []
-
-WIDTH = 100
-HEIGHT = 40
 
 for y in range(HEIGHT):
   game_map.append([])
   for x in range(WIDTH):
     game_map[y].append('.')
 
-rooms = Room(20)
+rooms = Room(MAX_ROOM)
 rooms.drawRooms(game_map)
 rooms.connectRooms(game_map)
 
