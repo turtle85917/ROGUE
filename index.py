@@ -9,8 +9,8 @@ for y in range(HEIGHT):
     game_map[y].append('.')
 
 rooms = Room(MAX_ROOM)
-rooms.drawRooms(game_map)
 rooms.connectRooms(game_map)
+rooms.drawRooms(game_map)
 
 p = ''
 for y in range(HEIGHT):
