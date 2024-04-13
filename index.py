@@ -6,7 +6,7 @@ game_map = []
 for y in range(HEIGHT):
   game_map.append([])
   for x in range(WIDTH):
-    game_map[y].append('.')
+    game_map[y].append(' ')
 
 rooms = Room(MAX_ROOM)
 rooms.connectRooms(game_map)
