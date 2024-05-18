@@ -1,5 +1,5 @@
-from room import Room
+from room import Room, MAX_DEPTH
 
 if __name__ == '__main__':
-    room = Room(5)
+    room = Room(MAX_DEPTH)
     room.printMap()

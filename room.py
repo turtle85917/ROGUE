@@ -16,13 +16,13 @@ class Room:
   __debugging__ = False
 
   # BSP 알고리즘에 사용할 자원
-  __minimum_divide_rate__ = 0.4
-  __maximum_divide_rate__ = 0.6
+  __minimum_divide_rate__ = 0.35
+  __maximum_divide_rate__ = 0.65
 
   __max_depth__ = 0
-  __nodes__:list[Node] = []
 
   game_map:list[list[str]] = []
+  rooms:list[BinaryRoom] = []
 
   def __init__(self, maxDepth:int):
     # 맵 초기화
@@ -41,9 +41,7 @@ class Room:
 
   # 1. 가장 긴쪽을 계속 나누어 공간을 만듦
   def divideMap(self, tree:Node, n:int):
-    if n == self.__max_depth__:
-      self.__nodes__.append(tree)
-      return
+    if n == self.__max_depth__: return
     maxLine = max(tree.width, tree.height)
     split = round(uniform(maxLine * self.__minimum_divide_rate__, maxLine * self.__maximum_divide_rate__))
     tempNode1:Node
@@ -76,11 +74,12 @@ class Room:
   def createRoom(self, tree:Node, n:int)->BinaryRoom:
     room:BinaryRoom
     if n == self.__max_depth__:
-      width = round(uniform(tree.width / 2, tree.width - 1)) # 최소 너비 크기는 width / 2
-      height = round(uniform(5, tree.height / 2))
-      top = tree.top + round(uniform(1, tree.height - height))
-      left = tree.left + round(uniform(1, tree.width - width))
+      width = round(uniform(10, tree.width - 1))
+      height = round(uniform(5, tree.height - 1))
+      top = tree.top + round(uniform(1, tree.height - height - 1))
+      left = tree.left + round(uniform(1, tree.width - width - 1))
       room = BinaryRoom(width, height, left, top)
+      self.rooms.append(room)
     else:
       tree.otherNode1.room = self.createRoom(tree.otherNode1, n + 1)
       tree.otherNode2.room = self.createRoom(tree.otherNode2, n + 1)
@@ -89,15 +88,14 @@ class Room:
   # 3. 길 연결하기
   def connectRooms(self, tree:Node, n:int):
     if n == self.__max_depth__: return # 최하위 노드는 무시
-    x1 = tree.otherNode1.room.left + tree.otherNode1.room.width // 2
-    x2 = tree.otherNode2.room.left + tree.otherNode2.room.width // 2
-    y1 = tree.otherNode1.room.top + tree.otherNode1.room.height // 2
-    y2 = tree.otherNode2.room.top + tree.otherNode2.room.height // 2
+    tree.otherNode1.room
+    x1, y1 = tree.otherNode1.room.calculateCenter()
+    x2, y2 = tree.otherNode2.room.calculateCenter()
 
-    for x in range(x1, x2):
+    for x in range(min(x1, x2), max(x1, x2) + 1):
       self.game_map[y1][x] = ROAD
-    for y in range(y1, y2):
-      self.game_map[y][x1] = ROAD
+    for y in range(min(y1, y2), max(y1, y2) + 1):
+      self.game_map[y][x2] = ROAD
 
     tree.otherNode1.room.draw(self.game_map)
     tree.otherNode2.room.draw(self.game_map)
@@ -161,3 +159,6 @@ class BinaryRoom:
               game_map[y][x] = WALL
             else:
               game_map[y][x] = ROOM
+
+  def calculateCenter(self)->tuple[int,int]:
+    return (self.left + self.right) // 2, (self.top + self.bottom) // 2
