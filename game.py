@@ -9,10 +9,10 @@ class Room:
   __debugging__ = False
 
   # BSP 알고리즘에 사용할 자원
-  __minimum_divide_rate__ = 0.35
-  __maximum_divide_rate__ = 0.65
+  __minimum_divide_rate = 0.35
+  __maximum_divide_rate = 0.65
 
-  __max_depth__ = 0
+  __max_depth = 0
 
   game_map:list[list[str]] = []
   rooms:list[BinaryRoom] = []
@@ -22,7 +22,7 @@ class Room:
     self.__initMap()
 
     # 루트 생성하기
-    self.__max_depth__ = maxDepth
+    self.__max_depth = maxDepth
     treeNode = Node(WIDTH, HEIGHT, 0, 0)
     if self.__debugging__:
       treeNode.draw(self.game_map)
@@ -34,9 +34,9 @@ class Room:
 
   # 1. 가장 긴쪽을 계속 나누어 공간을 만듦
   def divideMap(self, tree:Node, n:int):
-    if n == self.__max_depth__: return
+    if n == self.__max_depth: return
     maxLine = max(tree.width, tree.height)
-    split = round(uniform(maxLine * self.__minimum_divide_rate__, maxLine * self.__maximum_divide_rate__))
+    split = round(uniform(maxLine * self.__minimum_divide_rate, maxLine * self.__maximum_divide_rate))
     tempNode1:Node
     tempNode2:Node
     # width가 더 길다면
@@ -67,7 +67,7 @@ class Room:
   def createRoom(self, tree:Node, n:int)->BinaryRoom:
     room:BinaryRoom
     # 최하위 노드일 경우,
-    if n == self.__max_depth__:
+    if n == self.__max_depth:
       width = round(uniform(10, tree.width - 1)) # 최소 너비 10
       height = round(uniform(5, tree.height - 1)) # 최소 높이 5
       top = tree.top + round(uniform(1, tree.height - height - 1))
@@ -81,7 +81,7 @@ class Room:
     return room
   # 3. 길 연결하기
   def connectRooms(self, tree:Node, n:int):
-    if n == self.__max_depth__: return # 최하위 노드는 무시
+    if n == self.__max_depth: return # 최하위 노드는 무시
     tree.otherNode1.room
     x1, y1 = tree.otherNode1.room.calculateCenter()
     x2, y2 = tree.otherNode2.room.calculateCenter()
