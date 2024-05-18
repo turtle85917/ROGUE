@@ -1,15 +1,8 @@
-from __future__ import annotations
-from constants import *
-from enum import IntEnum
 from random import uniform
 
-class Direction(IntEnum):
-  LEFT = 0
-  RIGHT = 1
-  TOP = 2
-  BOTTOM = 3
-
-# BSP 알고리즘을 활용하여 방을 만듦
+from constants import *
+from node import BinaryRoom, Node
+from utils import drawNode
 
 class Room:
   # 디버깅용
@@ -26,7 +19,7 @@ class Room:
 
   def __init__(self, maxDepth:int):
     # 맵 초기화
-    self.__initMap__()
+    self.__initMap()
 
     # 루트 생성하기
     self.__max_depth__ = maxDepth
@@ -54,7 +47,7 @@ class Room:
       # 선긋기
       if self.__debugging__:
         for y in range(tree.top, tree.top + tree.height):
-          self.game_map[y][tree.left + split] = WALL
+          self.game_map[y][tree.left + split] = Props.WALL
     # height이 더 길다면
     else:
       # 세로 분할하여 생긴 두 노드 구하기
@@ -63,7 +56,7 @@ class Room:
       # 선긋기
       if self.__debugging__:
         for x in range(tree.left, tree.left + tree.width):
-          self.game_map[tree.top + split][x] = WALL
+          self.game_map[tree.top + split][x] = Props.WALL
     # 두 노드 상속하기
     tree.otherNode1 = tempNode1
     tree.otherNode2 = tempNode2
@@ -73,9 +66,10 @@ class Room:
   # 2. 나뉘어진 공간에 방을 랜덤하게 놓음
   def createRoom(self, tree:Node, n:int)->BinaryRoom:
     room:BinaryRoom
+    # 최하위 노드일 경우,
     if n == self.__max_depth__:
-      width = round(uniform(10, tree.width - 1))
-      height = round(uniform(5, tree.height - 1))
+      width = round(uniform(10, tree.width - 1)) # 최소 너비 10
+      height = round(uniform(5, tree.height - 1)) # 최소 높이 5
       top = tree.top + round(uniform(1, tree.height - height - 1))
       left = tree.left + round(uniform(1, tree.width - width - 1))
       room = BinaryRoom(width, height, left, top)
@@ -93,22 +87,22 @@ class Room:
     x2, y2 = tree.otherNode2.room.calculateCenter()
 
     for x in range(min(x1, x2), max(x1, x2) + 1):
-      self.game_map[y1][x] = ROAD
+      self.game_map[y1][x] = Props.ROAD
     for y in range(min(y1, y2), max(y1, y2) + 1):
-      self.game_map[y][x2] = ROAD
+      self.game_map[y][x2] = Props.ROAD
 
-    tree.otherNode1.room.draw(self.game_map)
-    tree.otherNode2.room.draw(self.game_map)
+    drawNode(self.game_map, tree.otherNode1.room, Props.ROOM)
+    drawNode(self.game_map, tree.otherNode2.room, Props.ROOM)
 
     self.connectRooms(tree.otherNode1, n + 1)
     self.connectRooms(tree.otherNode2, n + 1)
 
   # 게임 맵 초기화
-  def __initMap__(self):
+  def __initMap(self):
     for y in range(HEIGHT):
       self.game_map.append([])
       for _ in range(WIDTH):
-        self.game_map[y].append(CELL)
+        self.game_map[y].append(Props.CELL)
   def printMap(self):
     txt = ''
     for y in range(HEIGHT):
@@ -117,48 +111,3 @@ class Room:
       txt += '\n'
 
     print(txt)
-
-class Node:
-  otherNode1:Node
-  otherNode2:Node
-  room:BinaryRoom
-
-  def __init__(self, width:int, height:int, top:int, left:int):
-    self.width = width
-    self.height = height
-    self.top = top
-    self.left = left
-
-  def draw(self, game_map:list[list[str]]):
-    right = self.width + self.left - 1
-    bottom = self.height + self.top - 1
-    for y in range(len(game_map)):
-      if y >= self.top and bottom >= y:
-        for x in range(len(game_map[y])):
-          if x >= self.left and right >= x:
-            if x == self.left or x == right or y == self.top or y == bottom:
-              game_map[y][x] = WALL
-            else:
-              game_map[y][x] = CELL
-
-class BinaryRoom:
-  def __init__(self, width:int, height:int, left:int, top:int):
-    self.width = width
-    self.height = height
-    self.left = left
-    self.top = top
-    self.right = self.width + self.left - 1
-    self.bottom = self.height + self.top - 1
-
-  def draw(self, game_map:list[list[str]]):
-    for y in range(len(game_map)):
-      if y >= self.top and self.bottom >= y:
-        for x in range(len(game_map[y])):
-          if x >= self.left and self.right >= x:
-            if x == self.left or x == self.right or y == self.top or y == self.bottom:
-              game_map[y][x] = WALL
-            else:
-              game_map[y][x] = ROOM
-
-  def calculateCenter(self)->tuple[int,int]:
-    return (self.left + self.right) // 2, (self.top + self.bottom) // 2
