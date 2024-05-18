@@ -1,6 +1,6 @@
 from constants import *
-from game import Room
+from game import Game
 
 if __name__ == '__main__':
-    room = Room(MAX_DEPTH)
-    room.printMap()
+    room = Game(MAX_DEPTH)
+    room.run()

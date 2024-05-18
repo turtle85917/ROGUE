@@ -14,13 +14,17 @@ class Node:
     self.left = left
 
 class BinaryRoom:
+  right = 0
+  bottom = 0
+
   def __init__(self, width:int, height:int, left:int, top:int):
     self.width = width
     self.height = height
     self.left = left
     self.top = top
 
+    self.right = self.width + self.left - 1
+    self.bottom = self.height + self.top - 1
+
   def calculateCenter(self)->tuple[int,int]:
-    right = self.width + self.left - 1
-    bottom = self.height + self.top - 1
-    return (self.left + right) // 2, (self.top + bottom) // 2
+    return (self.left + self.right) // 2, (self.top + self.bottom) // 2

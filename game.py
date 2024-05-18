@@ -1,10 +1,10 @@
-from random import uniform
+from random import uniform, choice
 
 from constants import *
 from node import BinaryRoom, Node
 from utils import drawNode
 
-class Room:
+class Game:
   # 디버깅용
   __debugging__ = False
 
@@ -30,8 +30,18 @@ class Room:
     # 공간 분할하기
     self.divideMap(treeNode, 0)
     self.createRoom(treeNode, 0)
-    self.connectRooms(treeNode, 0)
+    self.generateRoad(treeNode, 0)
 
+  def run(self):
+    self._spawnPlayer()
+    self.printMap()
+
+  '''
+  BSP 알고리즘을 사용하여 랜덤하게 맵을 생성함.
+  1. 공간 생성
+  2. 방 생성
+  3. 길 생성 (방 연결)
+  '''
   # 1. 가장 긴쪽을 계속 나누어 공간을 만듦
   def divideMap(self, tree:Node, n:int):
     if n == self.__max_depth: return
@@ -80,7 +90,7 @@ class Room:
       room = tree.otherNode1.room
     return room
   # 3. 길 연결하기
-  def connectRooms(self, tree:Node, n:int):
+  def generateRoad(self, tree:Node, n:int):
     if n == self.__max_depth: return # 최하위 노드는 무시
     tree.otherNode1.room
     x1, y1 = tree.otherNode1.room.calculateCenter()
@@ -94,8 +104,13 @@ class Room:
     drawNode(self.game_map, tree.otherNode1.room, Props.ROOM)
     drawNode(self.game_map, tree.otherNode2.room, Props.ROOM)
 
-    self.connectRooms(tree.otherNode1, n + 1)
-    self.connectRooms(tree.otherNode2, n + 1)
+    self.generateRoad(tree.otherNode1, n + 1)
+    self.generateRoad(tree.otherNode2, n + 1)
+
+  def _spawnPlayer(self):
+    room = choice(self.rooms)
+    left, top = room.calculateCenter()
+    self.game_map[top][left] = Props.PLAYER
 
   # 게임 맵 초기화
   def __initMap(self):
