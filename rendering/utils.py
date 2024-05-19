@@ -1,4 +1,4 @@
-from types.pixel import Pixel
+from rendering.types.pixel import Pixel
 from rendering.constants import Props
 
 def getProps(pixel:Pixel):
