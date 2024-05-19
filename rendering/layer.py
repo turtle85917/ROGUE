@@ -27,6 +27,10 @@ class Layer:
             self.__map[y][x] = Pixel.Empty
 
   @property
+  def pixels(self)->list[list[Pixel]]:
+    return self.__map
+
+  @property
   def shape(self)->str:
     text = ''
     for y in self.__map:

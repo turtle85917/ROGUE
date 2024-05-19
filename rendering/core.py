@@ -1,5 +1,6 @@
 from rendering.types.pixel import Pixel
 from rendering.layer import Layer
+from rendering.utils import *
 
 class Rendering:
   __layers:list[Layer]
@@ -23,7 +24,6 @@ class Rendering:
           if layer.getPixel(x, y) != Pixel.Empty:
             result[y][x] = layer.getPixel(x, y)
     return result
-
   def subtractLayers(self, width:int, height:int, subtractOrigin:Layer, subtractClip:Layer)->list[list[Pixel]]:
     result = self.__newEmptyLayer(width, height)
     for layer in [subtractOrigin, subtractClip]:
@@ -34,6 +34,14 @@ class Rendering:
               result[y][x] = Pixel.Empty
           else:
             result[y][x] = layer.getPixel(x, y)
+    return result
+
+  def reverseLayer(self, layer:Layer)->list[list[Pixel]]:
+    result = self.__newEmptyLayer(layer.width, layer.height)
+    pixel = getDominantColor(layer.pixels)
+    for y in range(layer.height):
+      for x in range(layer.width):
+        result[y][x] =  pixel if layer.getPixel(x, y) == Pixel.Empty else Pixel.Empty
     return result
 
   def __newEmptyLayer(self, width:int, height:int)->list[list[Pixel]]:

@@ -71,40 +71,4 @@ print(layer5.shape)
 printLayer(render.addLayers(layer6.width, layer6.height))
 printLayer(render.subtractLayers(layer6.width, layer6.height, layer5, layer6))
 
-# printLayer(layer6)
-# printLayer(layer5)
-
-# layers = [layer5, layer6]
-# result = [[Pixel.Empty for _ in range(WIDTH)] for _ in range(HEIGHT)]
-
-# for layer in layers:
-#   for y in range(HEIGHT):
-#     for x in range(WIDTH):
-#       if layer[y][x ] != Pixel.Empty:
-#         result[y][x] = layer[y][x]
-
-# printLayer(result)
-
-# substractOrigin = layer5
-# substractClip = layer6
-# result = [[Pixel.Empty for _ in range(WIDTH)] for _ in range(HEIGHT)]
-# for layer in [substractOrigin, substractClip]:
-#   for y in range(HEIGHT):
-#     for x in range(WIDTH):
-#       if layer == substractClip:
-#         if layer[y][x] != Pixel.Empty:
-#           result[y][x] = Props.CELL
-#       else:
-#         result[y][x] = layer[y][x]
-
-# printLayer(result)
-
-# result = [[Pixel.Empty for _ in range(WIDTH)] for _ in range(HEIGHT)]
-# for y in range(HEIGHT):
-#   for x in range(WIDTH):
-#     if layer[y][x] == Pixel.Empty:
-#       result[y][x] = getDominantColor(layer6)
-#     else:
-#       result[y][x] = Props.CELL
-
-# printLayer(result)
+printLayer(render.reverseLayer(layer6))
