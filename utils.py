@@ -1,7 +1,7 @@
 from constants import Props
 from node import BinaryRoom, Node
 
-def drawNode(game_map:list[list[str]], node:Node | BinaryRoom, fill_cell:Props = Props.CELL):
+def drawNode(game_map:list[list[str]], node:Node|BinaryRoom, fill_cell:Props = Props.CELL):
   right = node.width + node.left - 1
   bottom = node.height + node.top - 1
   for y in range(len(game_map)):
