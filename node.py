@@ -7,6 +7,8 @@ class Node:
   otherNode2:Node
   room:BinaryRoom
 
+  isRowDivided:bool # 가로로 나뉘어져 있는가?
+
   def __init__(self, width:int, height:int, top:int, left:int):
     self.width = width
     self.height = height
