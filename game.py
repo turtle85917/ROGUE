@@ -4,38 +4,55 @@ from constants import *
 from node import BinaryRoom, Node
 from utils import drawNode
 
+from rendering.types.prop import Prop
+from rendering.layer import Layer
+from rendering.core import Rendering
+
+from player.core import Player
+
 class Game:
   # 디버깅용
-  __debugging__ = True
+  __debugging__ = False
 
   # BSP 알고리즘에 사용할 자원
   __minimum_divide_rate = 0.35
   __maximum_divide_rate = 0.65
 
   __max_depth = 0
-  __banned_rooms:list[BinaryRoom] = []
 
-  game_map:list[list[str]] = []
+  '''
+  레이어 안내
+  - 레이어 1
+  - 레이어 2: 디버그 노드, 길 용
+  - 레이어 3: 방
+  - 레이어 4
+  - 레이어 5: 문, 플레이어
+  '''
+  __layers:list[Layer] = []
+
+  __activeRoom:BinaryRoom
+
   rooms:list[BinaryRoom] = []
 
   def __init__(self, maxDepth:int):
-    # 맵 초기화
-    self.__initMap()
+    # 레이어 초기화
+    Layer.createNewLayers(self.__layers, 6, WIDTH, HEIGHT)
 
     # 루트 생성하기
     self.__max_depth = maxDepth
     treeNode = Node(WIDTH, HEIGHT, 0, 0)
     if self.__debugging__:
-      drawNode(self.game_map, treeNode)
+      drawNode(self.__layers[2], treeNode)
 
     # 공간 분할하기
     self.divideMap(treeNode, 0)
     self.createRoom(treeNode, 0)
     self.generateRoad(treeNode, 0)
     self.spawnDoors(treeNode, 0)
+    self.spawnDoorsFromBywayRooms(treeNode, 0)
 
   def run(self):
-    self._spawnPlayer()
+    self.__spawnPlayer()
     self.printMap()
 
   '''
@@ -60,7 +77,7 @@ class Game:
       # 선긋기
       if self.__debugging__:
         for y in range(tree.top, tree.top + tree.height):
-          self.game_map[y][tree.left + split] = Props.WALL
+          self.__layers[1].setPixel(tree.left + split, y, Prop.Wall)
     # height이 더 길다면
     else:
       # 세로 분할하여 생긴 두 노드 구하기
@@ -69,7 +86,7 @@ class Game:
       # 선긋기
       if self.__debugging__:
         for x in range(tree.left, tree.left + tree.width):
-          self.game_map[tree.top + split][x] = Props.WALL
+          self.__layers[1].setPixel(x, tree.top + split, Prop.Wall)
     # 두 노드 상속하기
     tree.otherNode1 = tempNode1
     tree.otherNode2 = tempNode2
@@ -92,16 +109,20 @@ class Game:
       # 최하위 깊이가 아닐 때, 반환할 방 방향 정하기
       isLeft1 = False
       isLeft2 = True
-      if n < self.__max_depth - 1:
-        if tree.otherNode1.isRowDivided and not tree.otherNode2.isRowDivided:
-          isLeft1 = False
-          isLeft2 = True
-        elif not tree.otherNode1.isRowDivided and tree.otherNode2.isRowDivided:
+      if tree.isRowDivided:
+        if tree.otherNode1.width >= tree.otherNode2.width:
           isLeft1 = True
           isLeft2 = False
-        else: #if not tree.otherNode1.isRowDivided and not tree.otherNode2.isRowDivided:
+        else:
           isLeft1 = False
+          isLeft2 = True
+      else:
+        if tree.otherNode1.height >= tree.otherNode2.height:
+          isLeft1 = True
           isLeft2 = False
+        else:
+          isLeft1 = False
+          isLeft2 = True
       tree.otherNode1.room = self.createRoom(tree.otherNode1, n + 1, isLeft1)
       tree.otherNode2.room = self.createRoom(tree.otherNode2, n + 1, isLeft2)
       room = tree.otherNode1.room if isLeft else tree.otherNode2.room
@@ -112,24 +133,14 @@ class Game:
     # 두 방의 중앙 구하기
     x1, y1 = tree.otherNode1.room.calculateCenter()
     x2, y2 = tree.otherNode2.room.calculateCenter()
-
+    # x 축을 먼저 연결 후, y 축 연결
     for x in range(min(x1, x2), max(x1, x2) + 1):
-      rs = list(filter(lambda i: i.left <= x <= i.right and i.top <= y1 <= i.bottom, self.rooms))
-      if tree.otherNode1.room in rs: rs.remove(tree.otherNode1.room)
-      if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
-      if len(rs) > 0:
-        self.__banned_rooms.append([tree.otherNode1, tree.otherNode2])
-        break
+      self.__layers[1].setPixel(x, y1, Prop.Road)
+    for y in range(min(y1, y2), max(y1, y2) + 1):
+      self.__layers[1].setPixel(x2, y, Prop.Road)
 
-    if [tree.otherNode1, tree.otherNode2] not in self.__banned_rooms:
-      # x 축을 먼저 연결 후, y 축 연결
-      for x in range(min(x1, x2), max(x1, x2) + 1):
-        self.game_map[y1][x] = Props.ROAD
-      for y in range(min(y1, y2), max(y1, y2) + 1):
-        self.game_map[y][x2] = Props.ROAD
-
-    drawNode(self.game_map, tree.otherNode1.room, Props.ROOM)
-    drawNode(self.game_map, tree.otherNode2.room, Props.ROOM)
+    drawNode(self.__layers[2], tree.otherNode1.room, Prop.Room)
+    drawNode(self.__layers[2], tree.otherNode2.room, Prop.Room)
 
     self.generateRoad(tree.otherNode1, n + 1)
     self.generateRoad(tree.otherNode2, n + 1)
@@ -138,54 +149,73 @@ class Game:
     if n == self.__max_depth: return # 최하위 노드는 무시
     room1 = tree.otherNode1.room
     room2 = tree.otherNode2.room
-    if [tree.otherNode1, tree.otherNode2] not in self.__banned_rooms:
-      x1, y1 = room1.calculateCenter()
-      x2, y2 = room2.calculateCenter()
-      # 가로 분할
-      if tree.isRowDivided:
-        # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
-        if -room2.height / 2 <= abs(y1 - y2) <= room2.height / 2:
-          self.game_map[y1][room1.right] = Props.DOOR
-          self.game_map[y1][room2.left] = Props.DOOR
+    x1, y1 = room1.calculateCenter()
+    x2, y2 = room2.calculateCenter()
+    # 가로 분할
+    if tree.isRowDivided:
+      # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
+      if -room2.height / 2 <= abs(y1 - y2) <= room2.height / 2:
+        self.__layers[4].setPixel(room1.right, y1, Prop.Door)
+        self.__layers[4].setPixel(room2.left, y1, Prop.Door)
+      else:
+        if y1 > y2:
+          self.__layers[4].setPixel(room1.right, y1, Prop.Door)
+          self.__layers[4].setPixel(x2, room2.bottom, Prop.Door)
         else:
-          if y1 > y2:
-            self.game_map[y1][room1.right] = Props.DOOR
-            self.game_map[room2.bottom][x2] = Props.DOOR
-          else:
-            self.game_map[y1][room1.right] = Props.DOOR
-            self.game_map[room2.top][x2] = Props.DOOR
-      # 세로 분할
-      if not tree.isRowDivided:
-        # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
-        if -room1.width / 2 <= abs(x1 - x2) <= room1.width / 2:
-          self.game_map[room1.bottom][x2] = Props.DOOR
-          self.game_map[room2.top][x2] = Props.DOOR
+          self.__layers[4].setPixel(room1.right, y1, Prop.Door)
+          self.__layers[4].setPixel(x2, room2.top, Prop.Door)
+    # 세로 분할
+    if not tree.isRowDivided:
+      # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
+      if -room1.width / 2 <= abs(x1 - x2) <= room1.width / 2:
+        self.__layers[4].setPixel(x2, room1.bottom, Prop.Door)
+        self.__layers[4].setPixel(x2, room2.top, Prop.Door)
+      else:
+        if x1 > x2:
+          self.__layers[4].setPixel(room1.left, y1, Prop.Door)
+          self.__layers[4].setPixel(x2, room2.top, Prop.Door)
         else:
-          if x1 > x2:
-            self.game_map[y1][room1.left] = Props.DOOR
-            self.game_map[room2.top][x2] = Props.DOOR
-          else:
-            self.game_map[y1][room1.right] = Props.DOOR
-            self.game_map[room2.top][x2] = Props.DOOR
+          self.__layers[4].setPixel(room1.right, y1, Prop.Door)
+          self.__layers[4].setPixel(x2, room2.top, Prop.Door)
 
     self.spawnDoors(tree.otherNode1, n + 1)
     self.spawnDoors(tree.otherNode2, n + 1)
+  def spawnDoorsFromBywayRooms(self, tree:Node, n:int):
+    if n == self.__max_depth: return # 최하위 노드는 무시
+    # 두 방의 중앙 구하기
+    x1, y1 = tree.otherNode1.room.calculateCenter()
+    x2, y2 = tree.otherNode2.room.calculateCenter()
+    for x in range(min(x1, x2), max(x1, x2) + 1):
+      rs = self.checkOverlappingRooms(x, y1)
+      if tree.otherNode1.room in rs: rs.remove(tree.otherNode1.room)
+      if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
+      for r in rs:
+        self.__layers[4].setPixel(r.left, y1, Prop.Door)
+        self.__layers[4].setPixel(r.right, y1, Prop.Door)
+    for y in range(min(y1, y2), max(y1, y2) + 1):
+      rs = self.checkOverlappingRooms(x2, y)
+      if tree.otherNode1.room in rs: rs.remove(tree.otherNode1.room)
+      if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
+      for r in rs:
+        self.__layers[4].setPixel(x2, r.top, Prop.Door)
+        self.__layers[4].setPixel(x2, r.bottom, Prop.Door)
+    self.spawnDoorsFromBywayRooms(tree.otherNode1, n + 1)
+    self.spawnDoorsFromBywayRooms(tree.otherNode2, n + 1)
 
-  def _spawnPlayer(self):
-    room = choice(self.rooms)
-    left, top = room.calculateCenter()
-    self.game_map[top][left] = Props.PLAYER
+  def __spawnPlayer(self):
+    self.__activeRoom = choice(self.rooms)
+    left, top = self.__activeRoom.calculateCenter()
+    self.__layers[4].setPixel(left, top, Prop.Player)
+
+    drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.ActiveWall)
+
+    player = Player((left, top), self.__layers[4])
+    player.run()
 
   # 게임 맵 초기화
-  def __initMap(self):
-    for y in range(HEIGHT):
-      self.game_map.append([])
-      for _ in range(WIDTH):
-        self.game_map[y].append(Props.CELL)
   def printMap(self):
-    txt = ''
-    for y in range(HEIGHT):
-      for x in range(WIDTH):
-        txt += self.game_map[y][x]
-      txt += '\n'
-    print(txt)
+    render = Rendering()
+    render.print(render.addLayers(WIDTH, HEIGHT, self.__layers))
+
+  def checkOverlappingRooms(self, x:int, y:int)->list[BinaryRoom]:
+    return list(filter(lambda i:i.top <= y <= i.bottom and i.left <= x <= i.right, self.rooms))

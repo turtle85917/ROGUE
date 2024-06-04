@@ -1,17 +1,7 @@
-from rendering.types.pixel import Pixel
-from rendering.constants import Props
+from rendering.types.prop import Prop
 
-def getProps(pixel:Pixel):
-  match pixel:
-    case Pixel.Test1:
-      return Props.COLORED_BLOCK
-    case Pixel.Test2:
-      return Props.COLORED_BLOCK2
-    case _:
-      return Props.CELL
-
-def getDominantColor(layer:list[list[Pixel]])->Pixel:
-  colorPalettes:dict[Pixel, int] = {}
+def getDominantColor(layer:list[list[Prop]])->Prop:
+  colorPalettes:dict[Prop, int] = {}
   for y in layer:
     for x in y:
       if colorPalettes.get(x) == None:

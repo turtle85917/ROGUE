@@ -1,39 +1,11 @@
-'''
-
-레이어가 있음
-
-레이어 6
-
-레이어 5
-
-레이어 4
-
-레이어 3
-
-레이어 2
-
-레이어 1
-
-'''
-
 from __future__ import annotations
 
 from rendering.types.pixel import Pixel
-from rendering.constants import Props
 from rendering.layer import Layer
 from rendering.core import Rendering
-from rendering.utils import getProps
 
 WIDTH = 80
 HEIGHT = 20
-
-def printLayer(layer:list[list[Pixel]])->str:
-  text = ''
-  for y in layer:
-    for x in y:
-      text += getProps(x)
-    text += '\n'
-  print(text)
 
 render = Rendering()
 
@@ -47,10 +19,17 @@ layer6.drawRect(10, 6, 7, 5)
 
 render.pushLayers([layer5, layer6])
 
-print(layer6.shape)
-print(layer5.shape)
+render.printLayer(layer6)
+render.printLayer(layer5)
 
-printLayer(render.addLayers(layer6.width, layer6.height))
-printLayer(render.subtractLayers(layer6.width, layer6.height, layer5, layer6))
+addedLayer = render.addLayers(layer6.width, layer6.height)
 
-printLayer(render.reverseLayer(layer6))
+render.print(addedLayer)
+render.print(render.subtractLayers(layer6.width, layer6.height, layer5, layer6))
+
+render.printLayer(render.reverseLayer(layer6))
+
+render.removeLayer(layer6)
+render.pushLayer(render.reverseLayer(layer6))
+
+render.print(render.addLayers(layer6.width, layer6.height))
