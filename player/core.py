@@ -1,19 +1,21 @@
-from pynput.keyboard import Key, Listener
+from typing import Literal
 
-from rendering.core import Layer
+from node import BinaryRoom
 
 class Player:
-  running = True
+  position:tuple[int, int]
 
-  def __init__(self, initialPosition:tuple[int,int], layer:Layer):
-    self.position = initialPosition
-    self.layer = layer
+  def __init__(self, room:BinaryRoom):
+    left, top = room.calculateCenter()
+    self.position = (left, top)
 
-  def run(self):
-    while self.running:
-      listener = Listener(on_press=self.onRealese)
-      listener.start()
-
-  def onRealese(self, key:Key):
-    if key == Key.esc:
-      self.running = False
+  def movePlayer(self, movement:Literal["up", "down", "left", "right"]):
+    match(movement):
+      case "up":
+        self.position = (self.position[0], self.position[1] - 1)
+      case "down":
+        self.position = (self.position[0], self.position[1] + 1)
+      case "left":
+        self.position = (self.position[0] - 1, self.position[1])
+      case "right":
+        self.position = (self.position[0] + 1, self.position[1])

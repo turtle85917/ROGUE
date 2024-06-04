@@ -1,9 +1,14 @@
+import os
+
 from rendering.types.prop import Prop
 from rendering.layer import Layer
 
 from node import BinaryRoom, Node
 
 def drawNode(layer:Layer, node:Node|BinaryRoom, fill_cell:Prop = Layer.EMPTY, border_cell:Prop = Prop.Wall):
+  '''
+  노드를 그립니다.
+  '''
   right = node.width + node.left - 1
   bottom = node.height + node.top - 1
   for y in range(layer.height):
@@ -14,3 +19,14 @@ def drawNode(layer:Layer, node:Node|BinaryRoom, fill_cell:Prop = Layer.EMPTY, bo
             layer.setPixel(x, y, border_cell)
           else:
             layer.setPixel(x, y, fill_cell)
+
+def clearConsole():
+  '''
+  콘솔창을 클리어합니다.
+  '''
+  os.system('cls')
+  setCursorShow(False)
+  print('\033[0;0H')
+
+def setCursorShow(isShow:bool):
+  print(f"\u001B[?25{'h' if isShow else 'l'}", end='')

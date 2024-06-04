@@ -25,6 +25,8 @@ class Layer:
 
   def load(self, props:list[list[Prop]]):
     self.__map = props
+  def clear(self):
+    self.fill(Prop.Cell)
 
   def fill(self, prop:Prop):
     for y in range(self.height):
