@@ -1,7 +1,7 @@
 from typing import Union, Literal
 from random import uniform, choice
 
-from pynput.keyboard import Key, Listener
+from pynput.keyboard import Key, KeyCode, Listener
 
 from constants import *
 from node import BinaryRoom, Node
@@ -35,12 +35,13 @@ class Game:
 
   __activeRoom:BinaryRoom
   __running__ = True
+  __listener:Listener
 
   __movementKeys:dict[str, list[Key]] = {
-    "up": ['w', Key.up],
-    "down": ['s', Key.down],
-    "left": ['a', Key.left],
-    "right": ['d', Key.right]
+    "up": [KeyCode.from_char('w'), Key.up],
+    "down": [KeyCode.from_char('s'), Key.down],
+    "left": [KeyCode.from_char('a'), Key.left],
+    "right": [KeyCode.from_char('d'), Key.right]
   }
   __pressedMovements:list[Union[None, Literal["up", "down", "left", "right"]]]
 
@@ -71,12 +72,16 @@ class Game:
     self.__spawnPlayer()
     self.printMap()
 
-    while self.__running__:
-      listener = Listener(
+    try:
+      with Listener(
         on_press=self.__onPress,
-        on_release=self.__onRelease
-      )
-      listener.start()
+        on_release=self.__onRelease,
+        suppress=True
+      ) as listener:
+        self.__listener = listener
+        self.__listener.join()
+    except:
+      pass
 
   '''
   BSP 알고리즘을 사용하여 랜덤하게 맵을 생성함.
@@ -231,18 +236,20 @@ class Game:
     self.player = Player(self.__activeRoom)
   def __drawPlayer(self):
     def getRoomInPlayer()->BinaryRoom|None:
-      filterdRooms = list(filter(lambda x:x.top <= self.player.position[1] <= x.bottom and x.left <= self.player.position[0] <= x.right, self.rooms))
+      filterdRooms = list(filter(lambda x:x.top <= self.player.position.y <= x.bottom and x.left <= self.player.position.x <= x.right, self.rooms))
       if(len(filterdRooms) == 0):
         return None
       return list(filterdRooms)[0]
+    # 플레이어가 들어온 방 강조하기
     activeRoom = getRoomInPlayer()
     if activeRoom == None and self.__activeRoom != None:
       drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.Wall)
     elif activeRoom != None:
       drawNode(self.__layers[2], activeRoom, Prop.Room, Prop.ActiveWall)
+    # 플레이어 표기
     self.__activeRoom = activeRoom
     self.__layers[4].clear()
-    self.__layers[4].setPixel(self.player.position[0], self.player.position[1], Prop.Player)
+    self.__layers[4].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
 
   # 게임 맵 초기화
   def printMap(self):
@@ -255,13 +262,13 @@ class Game:
     return list(filter(lambda i:i.top <= y <= i.bottom and i.left <= x <= i.right, self.rooms))
 
   def __onPress(self, key:Key):
+    if key == KeyCode.from_char('q'):
+      self.__processQuit()
     movement = self.__getMovement(key)
     if movement != None and movement not in self.__pressedMovements:
       self.__pressedMovements.append(movement)
       if len(self.__pressedMovements) > 3:
         self.__pressedMovements = []
-    if key == Key.esc:
-      self.running = False
   def __onRelease(self, key:Key):
     movement = self.__getMovement(key)
     if movement != None and movement in self.__pressedMovements:
@@ -274,3 +281,8 @@ class Game:
       if key in v:
         return k
     return None
+
+  def __processQuit(self):
+    self.running = False
+    setCursorShow(True)
+    self.__listener.stop()
