@@ -250,6 +250,11 @@ class Game:
     self.__activeRoom = activeRoom
     self.__layers[4].clear()
     self.__layers[4].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
+  def __movePlayer(self, movement:str):
+    self.player.movePlayer(movement)
+    prop = self.__layers[4].getPixel(self.player.position.x, self.player.position.y)
+    if not(prop == Prop.Wall or prop == Prop.ActiveWall):
+      self.player.position += Player.directions[movement] * -1
 
   # 게임 맵 초기화
   def printMap(self):
@@ -273,7 +278,7 @@ class Game:
     movement = self.__getMovement(key)
     if movement != None and movement in self.__pressedMovements:
       self.__pressedMovements.remove(movement)
-      self.player.movePlayer(movement)
+      self.__movePlayer(movement)
       self.printMap()
 
   def __getMovement(self, key:Key)->str|None:
