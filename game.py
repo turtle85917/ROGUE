@@ -234,27 +234,34 @@ class Game:
   def __spawnPlayer(self):
     self.__activeRoom = choice(self.rooms)
     self.player = Player(self.__activeRoom)
+    self.player.isInRoom = True
   def __drawPlayer(self):
+    if self.__activeRoom != None:
+      drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.ActiveWall)
+    # 플레이어 표기
+    self.__layers[4].clear()
+    self.__layers[4].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
+  def __movePlayer(self, movement:str):
     def getRoomInPlayer()->BinaryRoom|None:
       filterdRooms = list(filter(lambda x:x.top <= self.player.position.y <= x.bottom and x.left <= self.player.position.x <= x.right, self.rooms))
       if(len(filterdRooms) == 0):
         return None
       return list(filterdRooms)[0]
-    # 플레이어가 들어온 방 강조하기
-    activeRoom = getRoomInPlayer()
-    if activeRoom == None and self.__activeRoom != None:
-      drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.Wall)
-    elif activeRoom != None:
-      drawNode(self.__layers[2], activeRoom, Prop.Room, Prop.ActiveWall)
-    # 플레이어 표기
-    self.__activeRoom = activeRoom
-    self.__layers[4].clear()
-    self.__layers[4].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
-  def __movePlayer(self, movement:str):
     self.player.movePlayer(movement)
-    prop = self.__layers[4].getPixel(self.player.position.x, self.player.position.y)
-    if not(prop == Prop.Wall or prop == Prop.ActiveWall):
-      self.player.position += Player.directions[movement] * -1
+    direction = self.player.directions[self.player.lastDirection]
+    # 들어온 방 확인하기
+    room = getRoomInPlayer()
+    if room != None and self.__activeRoom != None:
+      drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.Wall)
+    self.__activeRoom = room
+    # 문 있는지 체크하기
+    forward = self.player.position + direction
+    if self.__layers[3].getPixel(forward.x, forward.y) == Prop.Door:
+      self.player.isInRoom = False
+    elif self.player.isInRoom and (self.__activeRoom.top + 1 > self.player.position.y or self.player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.player.position.x or self.player.position.x > self.__activeRoom.right - 1):
+      self.player.position -= direction
+    elif self.__activeRoom != None:
+      self.player.isInRoom = True
 
   # 게임 맵 초기화
   def printMap(self):

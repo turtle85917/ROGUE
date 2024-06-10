@@ -13,6 +13,11 @@ class Position:
     두 위치를 합한 새로운 위치를 반환합니다.
     '''
     return Position(self.x + other.x, self.y + other.y)
+  def __sub__(self, other:Position)->Position:
+    '''
+    두 위치를 뺀 새로운 위치를 반환합니다.
+    '''
+    return Position(self.x - other.x, self.y - other.y)
   def __mul__(self, val:int)->Position:
     '''
     위치와 숫자의 곱한 새로운 위치를 반환합니다.
