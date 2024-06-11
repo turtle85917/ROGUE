@@ -2,7 +2,7 @@ from rendering.types.prop import Prop
 from rendering.layer import Layer
 from rendering.utils import *
 
-class Rendering:
+class Render:
   __layers:list[Layer]
 
   def __init__(self, layers:list[Layer] = []):

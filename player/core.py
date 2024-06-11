@@ -2,6 +2,10 @@ from typing import Literal
 
 from node import BinaryRoom
 from position import Position
+from utils import *
+
+from rendering.layer import Layer
+from rendering.core import Render
 
 from player.stats import Stats
 
@@ -26,6 +30,17 @@ class Player:
     self.position = Position(left, top)
 
     self.stats = Stats()
+
+  def spawnRoom(self):
+    clearConsole()
+
+    layer = Layer(50, 50)
+
+    self.inRoom.width *= 5
+    self.inRoom.height *= 5
+
+    drawNode(layer, self.inRoom)
+    print(layer.shape)
 
   def movePlayer(self, movement:Literal["up", "down", "left", "right"]):
     self.position += self.directions[movement]

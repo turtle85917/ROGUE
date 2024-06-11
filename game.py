@@ -10,7 +10,7 @@ from utils import *
 
 from rendering.types.prop import Prop
 from rendering.layer import Layer
-from rendering.core import Rendering
+from rendering.core import Render
 
 from player.core import Player
 
@@ -298,7 +298,7 @@ class Game:
     clearConsole()
     self.__drawPlayer()
     self.__updatePlayerUI()
-    render = Rendering()
+    render = Render()
     render.print(render.addLayers(WIDTH, UI_HEIGHT, self.__layers))
 
   def __checkOverlappingRooms(self, x:int, y:int)->list[BinaryRoom]:
@@ -311,6 +311,7 @@ class Game:
       self.__running__ = False
       self.__listener.stop()
       self.player.inRoom = self.__activeRoom
+      self.player.spawnRoom()
     movement = self.__getMovement(key)
     if movement != None and movement not in self.__pressedMovements:
       self.__pressedMovements.append(movement)

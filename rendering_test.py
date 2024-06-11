@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from rendering.types.pixel import Pixel
 from rendering.layer import Layer
-from rendering.core import Rendering
+from rendering.core import Render
 
 WIDTH = 80
 HEIGHT = 20
 
-render = Rendering()
+render = Render()
 
 layer6 = Layer(WIDTH, HEIGHT)
 layer5 = Layer(WIDTH, HEIGHT)
