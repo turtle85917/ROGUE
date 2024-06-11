@@ -118,6 +118,9 @@ class Game:
       if self.__debugging__:
         for x in range(tree.left, tree.left + tree.width):
           self.__layers[1].setPixel(x, tree.top + split, Prop.Wall)
+    ################
+    tempNode1.parentNode = tree
+    tempNode2.parentNode = tree
     # 두 노드 상속하기
     tree.otherNode1 = tempNode1
     tree.otherNode2 = tempNode2
@@ -135,28 +138,13 @@ class Game:
       top = tree.top + round(uniform(1, tree.height - height - 1))
       left = tree.left + round(uniform(1, tree.width - width - 1))
       room = BinaryRoom(width, height, left, top)
+      room.node = tree
       self.rooms.append(room)
     else:
       # 최하위 깊이가 아닐 때, 반환할 방 방향 정하기
-      isLeft1 = False
-      isLeft2 = True
-      if tree.isRowDivided:
-        if tree.otherNode1.width >= tree.otherNode2.width:
-          isLeft1 = True
-          isLeft2 = False
-        else:
-          isLeft1 = False
-          isLeft2 = True
-      else:
-        if tree.otherNode1.height >= tree.otherNode2.height:
-          isLeft1 = True
-          isLeft2 = False
-        else:
-          isLeft1 = False
-          isLeft2 = True
-      tree.otherNode1.room = self.__createRoom(tree.otherNode1, n + 1, isLeft1)
-      tree.otherNode2.room = self.__createRoom(tree.otherNode2, n + 1, isLeft2)
-      room = tree.otherNode1.room if isLeft else tree.otherNode2.room
+      tree.otherNode1.room = self.__createRoom(tree.otherNode1, n + 1)
+      tree.otherNode2.room = self.__createRoom(tree.otherNode2, n + 1)
+      room = tree.otherNode2.room
     return room
   # 3. 길 연결하기
   def __generateRoad(self, tree:Node, n:int):
@@ -164,8 +152,14 @@ class Game:
     # 두 방의 중앙 구하기
     x1, y1 = tree.otherNode1.room.calculateCenter()
     x2, y2 = tree.otherNode2.room.calculateCenter()
+    endX = max(x1, x2)
+    endY = max(y1, y2)
+    if endX == tree.otherNode2.room.right or endX == tree.otherNode2.room.left:
+      endX -= 1
+    if endY == tree.otherNode2.room.top or endY == tree.otherNode2.room.bottom:
+      endY -= 1
     # x 축을 먼저 연결 후, y 축 연결
-    for x in range(min(x1, x2), max(x1, x2) + 1):
+    for x in range(min(x1, x2), endX + 1):
       self.__layers[1].setPixel(x, y1, Prop.Road)
     for y in range(min(y1, y2), max(y1, y2) + 1):
       self.__layers[1].setPixel(x2, y, Prop.Road)
@@ -216,11 +210,14 @@ class Game:
     # 두 방의 중앙 구하기
     x1, y1 = tree.otherNode1.room.calculateCenter()
     x2, y2 = tree.otherNode2.room.calculateCenter()
+    goalNode1 = tree.otherNode2 if x2 > x1 else tree.otherNode1
+    goalNode2 = tree.otherNode2 if y2 > y1 else tree.otherNode1
     for x in range(min(x1, x2), max(x1, x2) + 1):
       rs = self.__checkOverlappingRooms(x, y1)
       if tree.otherNode1.room in rs: rs.remove(tree.otherNode1.room)
       if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
       for r in rs:
+        if r.node.parentNode == goalNode1.parentNode: continue
         self.__layers[3].setPixel(r.left, y1, Prop.Door)
         self.__layers[3].setPixel(r.right, y1, Prop.Door)
     for y in range(min(y1, y2), max(y1, y2) + 1):
@@ -228,6 +225,7 @@ class Game:
       if tree.otherNode1.room in rs: rs.remove(tree.otherNode1.room)
       if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
       for r in rs:
+        if r.node.parentNode == goalNode2.parentNode: continue
         self.__layers[3].setPixel(x2, r.top, Prop.Door)
         self.__layers[3].setPixel(x2, r.bottom, Prop.Door)
     self.__spawnDoorsFromBywayRooms(tree.otherNode1, n + 1)
@@ -248,12 +246,15 @@ class Game:
     self.__layers[4].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
   def __movePlayer(self, movement:str):
     def getRoomInPlayer()->BinaryRoom|None:
-      filterdRooms = list(filter(lambda x:x.top <= self.player.position.y <= x.bottom and x.left <= self.player.position.x <= x.right, self.rooms))
+      filterdRooms = list(filter(lambda x:x.top < self.player.position.y < x.bottom and x.left < self.player.position.x < x.right, self.rooms))
       if(len(filterdRooms) == 0):
         return None
       return list(filterdRooms)[0]
     self.player.movePlayer(movement)
     direction = self.player.directions[self.player.lastDirection]
+    # 방 안에 있는 상황이며, 방 외곽에 있을 경우, 안으로 들어오게 함
+    if self.player.isInRoom and self.__activeRoom != None and (self.__activeRoom.top + 1 > self.player.position.y or self.player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.player.position.x or self.player.position.x > self.__activeRoom.right - 1):
+      self.player.position -= direction
     # 들어온 방 확인하기
     room = getRoomInPlayer()
     if self.__activeRoom != None:
@@ -275,9 +276,6 @@ class Game:
     # 방 안에 있는 상황이 아니며, 플레이어가 문 위에 있지 않으면 방 안에 있음을 확정
     elif not self.player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
       self.player.isInRoom = True
-    # 방 안에 있는 상황이며, 방 외곽에 있을 경우, 안으로 들어오게 함
-    if self.player.isInRoom and self.__activeRoom != None and (self.__activeRoom.top + 1 > self.player.position.y or self.player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.player.position.x or self.player.position.x > self.__activeRoom.right - 1):
-      self.player.position -= direction
 
   # 게임 맵 초기화
   def printMap(self):

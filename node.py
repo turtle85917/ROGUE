@@ -5,6 +5,8 @@ from constants import *
 class Node:
   otherNode1:Node
   otherNode2:Node
+  parentNode:Node
+
   room:BinaryRoom
 
   isRowDivided:bool # 가로로 나뉘어져 있는가?
@@ -18,6 +20,8 @@ class Node:
 class BinaryRoom:
   right = 0
   bottom = 0
+
+  node:Node
 
   def __init__(self, width:int, height:int, left:int, top:int):
     self.width = width
