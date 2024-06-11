@@ -1,5 +1,7 @@
 # 맵 생성 조건
 WIDTH = 140
-HEIGHT = 52
+HEIGHT = 50
+
+UI_HEIGHT = 52
 
 MAX_DEPTH = 3

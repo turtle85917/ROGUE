@@ -15,6 +15,7 @@ class Player:
     "right": Position(1, 0)
   }
 
+  inRoom:BinaryRoom
   stats:Stats
 
   isInRoom:bool

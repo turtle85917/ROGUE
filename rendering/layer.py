@@ -18,7 +18,11 @@ class Layer:
       layers.append(Layer(width, height))
       layers[i].fill(Layer.EMPTY)
 
-  def getPixel(self, x:int, y:int):
+  def getPixel(self, x:int, y:int)->Prop|None:
+    if y >= len(self.__map):
+      return None
+    if x >= len(self.__map[y]):
+      return None
     return self.__map[y][x]
   def setPixel(self, x:int, y:int, prop:Prop):
     self.__map[y][x] = prop

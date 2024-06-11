@@ -62,6 +62,7 @@ class Game:
   def __init__(self, maxDepth:int):
     # 레이어 초기화
     Layer.createNewLayers(self.__layers, 6, WIDTH, HEIGHT)
+    self.__layers[LayerOrder.UI] = Layer(WIDTH, UI_HEIGHT)
 
     # 값 초기화
     self.__pressedMovements = []
@@ -81,7 +82,7 @@ class Game:
 
   def run(self):
     self.__spawnPlayer()
-    self.printMap()
+    self.__printMap()
 
     try:
       with Listener(
@@ -246,7 +247,7 @@ class Game:
     self.player.isInRoom = True
   def __drawPlayer(self):
     if self.__activeRoom != None:
-      self.__layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (2, 50))
+      self.__layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 50))
       drawNode(self.__layers[LayerOrder.Room], self.__activeRoom, Prop.Room, Prop.ActiveWall)
     elif self.__latestRoom != None:
       self.__layers[LayerOrder.UI].clear(50)
@@ -288,17 +289,17 @@ class Game:
       self.player.isInRoom = True
   def __updatePlayerUI(self):
     self.__layers[LayerOrder.UI].writeText(
-      f"Lv. {self.player.stats.level: <10} Curse {self.player.stats.curse: <10} $ {self.player.stats.money: <5} Hp. {self.player.stats.health: <5} Pw. {self.player.stats.power: <5} Dp. {self.player.stats.defense: <5} Energy {self.player.stats.energy: <10} Xp {self.player.stats.exp} / {self.player.stats.nextExp}",
-      (2, 51)
+      f"Lv. {self.player.stats.level: <10} Curse {self.player.stats.curse: <10} $ {self.player.stats.money: <5} Hp. {self.player.stats.health: <5} Pw. {self.player.stats.power: <5} Dp. {self.player.stats.defense: <5} Energy {self.player.stats.energy: <5} Xp {self.player.stats.exp} / {self.player.stats.nextExp}",
+      (0, 51)
     )
 
   # 게임 맵 초기화
-  def printMap(self):
+  def __printMap(self):
     clearConsole()
     self.__drawPlayer()
     self.__updatePlayerUI()
     render = Rendering()
-    render.print(render.addLayers(WIDTH, HEIGHT, self.__layers))
+    render.print(render.addLayers(WIDTH, UI_HEIGHT, self.__layers))
 
   def __checkOverlappingRooms(self, x:int, y:int)->list[BinaryRoom]:
     return list(filter(lambda i:i.top <= y <= i.bottom and i.left <= x <= i.right, self.rooms))
@@ -306,6 +307,10 @@ class Game:
   def __onPress(self, key:Key):
     if key == KeyCode.from_char('q'):
       self.__processQuit()
+    if key == Key.enter and self.__activeRoom != None:
+      self.__running__ = False
+      self.__listener.stop()
+      self.player.inRoom = self.__activeRoom
     movement = self.__getMovement(key)
     if movement != None and movement not in self.__pressedMovements:
       self.__pressedMovements.append(movement)
@@ -316,7 +321,7 @@ class Game:
     if movement != None and movement in self.__pressedMovements:
       self.__pressedMovements.remove(movement)
       self.__movePlayer(movement)
-      self.printMap()
+      self.__printMap()
 
   def __getMovement(self, key:Key)->str|None:
     for k, v in self.__movementKeys.items():
@@ -325,6 +330,6 @@ class Game:
     return None
 
   def __processQuit(self):
-    self.running = False
+    self.__running__ = False
     setCursorShow(True)
     self.__listener.stop()

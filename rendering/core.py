@@ -32,8 +32,11 @@ class Rendering:
     for layer in _layers:
       for y in range(height):
         for x in range(width):
-          if layer.getPixel(x, y) != Layer.EMPTY:
-            result[y][x] = layer.getPixel(x, y)
+          pixel = layer.getPixel(x, y)
+          if pixel == None:
+            result[y][x] = Layer.EMPTY
+          elif pixel != Layer.EMPTY:
+            result[y][x] = pixel
     return result
   def subtractLayers(self, width:int, height:int, subtractOrigin:Layer, subtractClip:Layer)->list[list[Prop]]:
     result = self.__newEmptyLayer(width, height)
@@ -62,4 +65,3 @@ class Rendering:
 
   def __newEmptyLayer(self, width:int, height:int)->list[list[Prop]]:
     return [[Layer.EMPTY for _ in range(width)] for _ in range(height)]
-
