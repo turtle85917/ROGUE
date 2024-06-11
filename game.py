@@ -30,10 +30,13 @@ class Game:
   - 레이어 3: 방
   - 레이어 4: 문
   - 레이어 5: 플레이어
+  - 레이어 6
   '''
   __layers:list[Layer] = []
 
   __activeRoom:BinaryRoom
+  __latestRoom:BinaryRoom
+
   __running__ = True
   __listener:Listener
 
@@ -232,12 +235,14 @@ class Game:
 
   # 플레이어 관련
   def __spawnPlayer(self):
-    self.__activeRoom = choice(self.rooms)
+    self.__activeRoom = self.__latestRoom = choice(self.rooms)
     self.player = Player(self.__activeRoom)
     self.player.isInRoom = True
   def __drawPlayer(self):
     if self.__activeRoom != None:
       drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.ActiveWall)
+    elif self.__latestRoom != None:
+      drawNode(self.__layers[2], self.__latestRoom, Prop.Room)
     # 플레이어 표기
     self.__layers[4].clear()
     self.__layers[4].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
@@ -251,17 +256,28 @@ class Game:
     direction = self.player.directions[self.player.lastDirection]
     # 들어온 방 확인하기
     room = getRoomInPlayer()
-    if room != None and self.__activeRoom != None:
-      drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.Wall)
+    if self.__activeRoom != None:
+      self.__latestRoom = self.__activeRoom
     self.__activeRoom = room
     # 문 있는지 체크하기
     forward = self.player.position + direction
-    if self.__layers[3].getPixel(forward.x, forward.y) == Prop.Door:
+
+    forwardPixel = self.__layers[3].getPixel(forward.x, forward.y)
+    pixel = self.__layers[3].getPixel(self.player.position.x, self.player.position.y)
+    pixel2 = self.__layers[1].getPixel(self.player.position.x, self.player.position.y)
+
+    # 앞에 있는 픽셀 혹은 위에 있는 픽셀이 문일 경우
+    if forwardPixel == Prop.Door or pixel == Prop.Door:
       self.player.isInRoom = False
-    elif self.player.isInRoom and (self.__activeRoom.top + 1 > self.player.position.y or self.player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.player.position.x or self.player.position.x > self.__activeRoom.right - 1):
+    # 플레이어가 길 위에 없을 경우
+    elif not self.player.isInRoom and pixel2 != Prop.Road:
       self.player.position -= direction
-    elif self.__activeRoom != None:
+    # 방 안에 있는 상황이 아니며, 플레이어가 문 위에 있지 않으면 방 안에 있음을 확정
+    elif not self.player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
       self.player.isInRoom = True
+    # 방 안에 있는 상황이며, 방 외곽에 있을 경우, 안으로 들어오게 함
+    if self.player.isInRoom and self.__activeRoom != None and (self.__activeRoom.top + 1 > self.player.position.y or self.player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.player.position.x or self.player.position.x > self.__activeRoom.right - 1):
+      self.player.position -= direction
 
   # 게임 맵 초기화
   def printMap(self):

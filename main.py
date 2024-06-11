@@ -1,4 +1,4 @@
-from constants import *
+from constants import MAX_DEPTH
 from game import Game
 
 if __name__ == '__main__':

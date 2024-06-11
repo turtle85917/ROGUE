@@ -23,6 +23,8 @@ class Position:
     위치와 숫자의 곱한 새로운 위치를 반환합니다.
     '''
     return Position(self.x * val, self.y * val)
+  def __repr__(self):
+    return f"({self.x}, {self.y})"
 
   @property
   def x(self):
