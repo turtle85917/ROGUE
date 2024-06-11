@@ -3,6 +3,8 @@ from typing import Literal
 from node import BinaryRoom
 from position import Position
 
+from player.stats import Stats
+
 class Player:
   position:Position
   lastDirection:Literal["up", "down", "left", "right"] | None
@@ -13,12 +15,16 @@ class Player:
     "right": Position(1, 0)
   }
 
+  stats:Stats
+
   isInRoom:bool
 
   def __init__(self, room:BinaryRoom):
     left, top = room.calculateCenter()
     self.lastDirection = None
     self.position = Position(left, top)
+
+    self.stats = Stats()
 
   def movePlayer(self, movement:Literal["up", "down", "left", "right"]):
     self.position += self.directions[movement]

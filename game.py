@@ -1,3 +1,4 @@
+from enum import IntEnum
 from typing import Union, Literal
 from random import uniform, choice
 
@@ -13,6 +14,13 @@ from rendering.core import Rendering
 
 from player.core import Player
 
+class LayerOrder(IntEnum):
+  Road = 0
+  Room = 1
+  Door = 2
+  Player = 3
+  UI = 5
+
 class Game:
   # 디버깅용
   __debugging__ = False
@@ -25,12 +33,12 @@ class Game:
 
   '''
   레이어 안내
-  - 레이어 1
-  - 레이어 2: 디버그 노드, 길 용
-  - 레이어 3: 방
-  - 레이어 4: 문
-  - 레이어 5: 플레이어
-  - 레이어 6
+  - 레이어 1: 디버그 노드, 길 용
+  - 레이어 2: 방
+  - 레이어 3: 문
+  - 레이어 4: 플레이어
+  - 레이어 5: ???
+  - 레이어 6: UI
   '''
   __layers:list[Layer] = []
 
@@ -62,7 +70,7 @@ class Game:
     self.__max_depth = maxDepth
     treeNode = Node(WIDTH, HEIGHT, 0, 0)
     if self.__debugging__:
-      drawNode(self.__layers[2], treeNode)
+      drawNode(self.__layers[LayerOrder.Road], treeNode)
 
     # 공간 분할하기
     self.__divideMap(treeNode, 0)
@@ -108,7 +116,7 @@ class Game:
       # 선긋기
       if self.__debugging__:
         for y in range(tree.top, tree.top + tree.height):
-          self.__layers[1].setPixel(tree.left + split, y, Prop.Wall)
+          self.__layers[LayerOrder.Road].setPixel(tree.left + split, y, Prop.Wall)
     # height이 더 길다면
     else:
       # 세로 분할하여 생긴 두 노드 구하기
@@ -117,7 +125,7 @@ class Game:
       # 선긋기
       if self.__debugging__:
         for x in range(tree.left, tree.left + tree.width):
-          self.__layers[1].setPixel(x, tree.top + split, Prop.Wall)
+          self.__layers[LayerOrder.Road].setPixel(x, tree.top + split, Prop.Wall)
     ################
     tempNode1.parentNode = tree
     tempNode2.parentNode = tree
@@ -160,12 +168,12 @@ class Game:
       endY -= 1
     # x 축을 먼저 연결 후, y 축 연결
     for x in range(min(x1, x2), endX + 1):
-      self.__layers[1].setPixel(x, y1, Prop.Road)
+      self.__layers[LayerOrder.Road].setPixel(x, y1, Prop.Road)
     for y in range(min(y1, y2), max(y1, y2) + 1):
-      self.__layers[1].setPixel(x2, y, Prop.Road)
+      self.__layers[LayerOrder.Road].setPixel(x2, y, Prop.Road)
 
-    drawNode(self.__layers[2], tree.otherNode1.room, Prop.Room)
-    drawNode(self.__layers[2], tree.otherNode2.room, Prop.Room)
+    drawNode(self.__layers[LayerOrder.Room], tree.otherNode1.room, Prop.Room)
+    drawNode(self.__layers[LayerOrder.Room], tree.otherNode2.room, Prop.Room)
 
     self.__generateRoad(tree.otherNode1, n + 1)
     self.__generateRoad(tree.otherNode2, n + 1)
@@ -180,28 +188,28 @@ class Game:
     if tree.isRowDivided:
       # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
       if -room2.height / 2 <= abs(y1 - y2) <= room2.height / 2:
-        self.__layers[3].setPixel(room1.right, y1, Prop.Door)
-        self.__layers[3].setPixel(room2.left, y1, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(room2.left, y1, Prop.Door)
       else:
         if y1 > y2:
-          self.__layers[3].setPixel(room1.right, y1, Prop.Door)
-          self.__layers[3].setPixel(x2, room2.bottom, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(x2, room2.bottom, Prop.Door)
         else:
-          self.__layers[3].setPixel(room1.right, y1, Prop.Door)
-          self.__layers[3].setPixel(x2, room2.top, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
     # 세로 분할
     if not tree.isRowDivided:
       # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
       if -room1.width / 2 <= abs(x1 - x2) <= room1.width / 2:
-        self.__layers[3].setPixel(x2, room1.bottom, Prop.Door)
-        self.__layers[3].setPixel(x2, room2.top, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(x2, room1.bottom, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
       else:
         if x1 > x2:
-          self.__layers[3].setPixel(room1.left, y1, Prop.Door)
-          self.__layers[3].setPixel(x2, room2.top, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(room1.left, y1, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
         else:
-          self.__layers[3].setPixel(room1.right, y1, Prop.Door)
-          self.__layers[3].setPixel(x2, room2.top, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+          self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
 
     self.__spawnDoors(tree.otherNode1, n + 1)
     self.__spawnDoors(tree.otherNode2, n + 1)
@@ -218,16 +226,16 @@ class Game:
       if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
       for r in rs:
         if r.node.parentNode == goalNode1.parentNode: continue
-        self.__layers[3].setPixel(r.left, y1, Prop.Door)
-        self.__layers[3].setPixel(r.right, y1, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(r.left, y1, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(r.right, y1, Prop.Door)
     for y in range(min(y1, y2), max(y1, y2) + 1):
       rs = self.__checkOverlappingRooms(x2, y)
       if tree.otherNode1.room in rs: rs.remove(tree.otherNode1.room)
       if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
       for r in rs:
         if r.node.parentNode == goalNode2.parentNode: continue
-        self.__layers[3].setPixel(x2, r.top, Prop.Door)
-        self.__layers[3].setPixel(x2, r.bottom, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(x2, r.top, Prop.Door)
+        self.__layers[LayerOrder.Door].setPixel(x2, r.bottom, Prop.Door)
     self.__spawnDoorsFromBywayRooms(tree.otherNode1, n + 1)
     self.__spawnDoorsFromBywayRooms(tree.otherNode2, n + 1)
 
@@ -238,12 +246,14 @@ class Game:
     self.player.isInRoom = True
   def __drawPlayer(self):
     if self.__activeRoom != None:
-      drawNode(self.__layers[2], self.__activeRoom, Prop.Room, Prop.ActiveWall)
+      self.__layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (2, 50))
+      drawNode(self.__layers[LayerOrder.Room], self.__activeRoom, Prop.Room, Prop.ActiveWall)
     elif self.__latestRoom != None:
-      drawNode(self.__layers[2], self.__latestRoom, Prop.Room)
+      self.__layers[LayerOrder.UI].clear(50)
+      drawNode(self.__layers[LayerOrder.Room], self.__latestRoom, Prop.Room)
     # 플레이어 표기
-    self.__layers[4].clear()
-    self.__layers[4].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
+    self.__layers[LayerOrder.Player].clear()
+    self.__layers[LayerOrder.Player].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
   def __movePlayer(self, movement:str):
     def getRoomInPlayer()->BinaryRoom|None:
       filterdRooms = list(filter(lambda x:x.top < self.player.position.y < x.bottom and x.left < self.player.position.x < x.right, self.rooms))
@@ -263,9 +273,9 @@ class Game:
     # 문 있는지 체크하기
     forward = self.player.position + direction
 
-    forwardPixel = self.__layers[3].getPixel(forward.x, forward.y)
-    pixel = self.__layers[3].getPixel(self.player.position.x, self.player.position.y)
-    pixel2 = self.__layers[1].getPixel(self.player.position.x, self.player.position.y)
+    forwardPixel = self.__layers[LayerOrder.Door].getPixel(forward.x, forward.y)
+    pixel = self.__layers[LayerOrder.Door].getPixel(self.player.position.x, self.player.position.y)
+    pixel2 = self.__layers[LayerOrder.Road].getPixel(self.player.position.x, self.player.position.y)
 
     # 앞에 있는 픽셀 혹은 위에 있는 픽셀이 문일 경우
     if forwardPixel == Prop.Door or pixel == Prop.Door:
@@ -276,11 +286,17 @@ class Game:
     # 방 안에 있는 상황이 아니며, 플레이어가 문 위에 있지 않으면 방 안에 있음을 확정
     elif not self.player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
       self.player.isInRoom = True
+  def __updatePlayerUI(self):
+    self.__layers[LayerOrder.UI].writeText(
+      f"Lv. {self.player.stats.level: <10} Curse {self.player.stats.curse: <10} $ {self.player.stats.money: <5} Hp. {self.player.stats.health: <5} Pw. {self.player.stats.power: <5} Dp. {self.player.stats.defense: <5} Energy {self.player.stats.energy: <10} Xp {self.player.stats.exp} / {self.player.stats.nextExp}",
+      (2, 51)
+    )
 
   # 게임 맵 초기화
   def printMap(self):
     clearConsole()
     self.__drawPlayer()
+    self.__updatePlayerUI()
     render = Rendering()
     render.print(render.addLayers(WIDTH, HEIGHT, self.__layers))
 

@@ -23,10 +23,26 @@ class Layer:
   def setPixel(self, x:int, y:int, prop:Prop):
     self.__map[y][x] = prop
 
+  def writeText(self, txt:str, pos:tuple[int,int]):
+    x = pos[0]
+    y = pos[1]
+    for char in txt:
+      self.__map[y][x] = char
+      x += 1
+      if x >= self.width: break
+      if char == "\n":
+        x = pos[0]
+        y += 1
+        if y >= self.height: break
+
   def load(self, props:list[list[Prop]]):
     self.__map = props
-  def clear(self):
-    self.fill(Prop.Cell)
+  def clear(self, row:int = -1):
+    if row != -1:
+      for index in range(len(self.__map[row])):
+        self.__map[row][index] = Prop.Cell
+    else:
+      self.fill(Prop.Cell)
 
   def fill(self, prop:Prop):
     for y in range(self.height):
