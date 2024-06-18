@@ -1,11 +1,11 @@
 from typing import Literal
 
-from node import BinaryRoom
+from scene.MiniMap.node import BinaryRoom
 from position import Position
-from utils import *
+from scene.MiniMap.utils import *
 
 from rendering.layer import Layer
-from rendering.core import Render
+from rendering.main import Render
 
 from player.stats import Stats
 

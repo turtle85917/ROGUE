@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from constants import *
+from scene.MiniMap.constants import *
 
 class Node:
   otherNode1:Node

@@ -1,27 +1,24 @@
-from enum import IntEnum
 from typing import Union, Literal
 from random import uniform, choice
 
 from pynput.keyboard import Key, KeyCode, Listener
 
-from constants import *
-from node import BinaryRoom, Node
-from utils import *
+from scene.manager import SceneManager
+from scene.schema import Scene
+
+from scene.MiniMap.constants import *
+
+from scene.MiniMap.utils import *
+from scene.MiniMap.node import BinaryRoom, Node
+from scene.MiniMap.types.layerOrder import LayerOrder
 
 from rendering.types.prop import Prop
 from rendering.layer import Layer
-from rendering.core import Render
+from rendering.main import Render
 
 from player.core import Player
 
-class LayerOrder(IntEnum):
-  Road = 0
-  Room = 1
-  Door = 2
-  Player = 3
-  UI = 5
-
-class Game:
+class MiniMap(Scene):
   # 디버깅용
   __debugging__ = False
 
@@ -59,7 +56,13 @@ class Game:
   rooms:list[BinaryRoom] = []
   player:Player
 
-  def __init__(self, maxDepth:int):
+  manager:SceneManager
+
+  def __init__(self):
+    super().__init__()
+
+    self.sceneName = "MiniMap"
+
     # 레이어 초기화
     Layer.createNewLayers(self.__layers, 6, WIDTH, HEIGHT)
     self.__layers[LayerOrder.UI] = Layer(WIDTH, UI_HEIGHT)
@@ -68,7 +71,7 @@ class Game:
     self.__pressedMovements = []
 
     # 루트 생성하기
-    self.__max_depth = maxDepth
+    self.__max_depth = MAX_DEPTH
     treeNode = Node(WIDTH, HEIGHT, 0, 0)
     if self.__debugging__:
       drawNode(self.__layers[LayerOrder.Road], treeNode)
@@ -80,7 +83,7 @@ class Game:
     self.__spawnDoors(treeNode, 0)
     self.__spawnDoorsFromBywayRooms(treeNode, 0)
 
-  def run(self):
+  def render(self):
     self.__spawnPlayer()
     self.__printMap()
 
@@ -95,7 +98,7 @@ class Game:
     except:
       pass
 
-  '''
+    '''
   BSP 알고리즘을 사용하여 랜덤하게 맵을 생성함.
   1. 공간 생성
   2. 방 생성
@@ -239,6 +242,8 @@ class Game:
         self.__layers[LayerOrder.Door].setPixel(x2, r.bottom, Prop.Door)
     self.__spawnDoorsFromBywayRooms(tree.otherNode1, n + 1)
     self.__spawnDoorsFromBywayRooms(tree.otherNode2, n + 1)
+
+    # 플레이어 관련
 
   # 플레이어 관련
   def __spawnPlayer(self):

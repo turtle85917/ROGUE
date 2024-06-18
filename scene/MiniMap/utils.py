@@ -3,7 +3,7 @@ import os
 from rendering.types.prop import Prop
 from rendering.layer import Layer
 
-from node import BinaryRoom, Node
+from scene.MiniMap.node import BinaryRoom, Node
 
 def drawNode(layer:Layer, node:Node|BinaryRoom, fill_cell:Prop = Layer.EMPTY, border_cell:Prop = Prop.Wall):
   '''

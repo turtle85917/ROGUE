@@ -1,6 +1,8 @@
-from constants import MAX_DEPTH
-from game import Game
+from scene.manager import SceneManager
+
+from scene.MiniMap.main import MiniMap
 
 if __name__ == '__main__':
-  room = Game(MAX_DEPTH)
-  room.run()
+  sceneManager = SceneManager([MiniMap()])
+  sceneManager.setDefaultScene(0)
+  sceneManager.changeDefaultScene()
