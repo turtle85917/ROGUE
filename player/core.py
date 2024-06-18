@@ -4,9 +4,6 @@ from scene.MiniMap.node import BinaryRoom
 from position import Position
 from scene.MiniMap.utils import *
 
-from rendering.layer import Layer
-from rendering.main import Render
-
 from player.stats import Stats
 
 class Player:
@@ -19,7 +16,6 @@ class Player:
     "right": Position(1, 0)
   }
 
-  inRoom:BinaryRoom
   stats:Stats
 
   isInRoom:bool
@@ -30,17 +26,6 @@ class Player:
     self.position = Position(left, top)
 
     self.stats = Stats()
-
-  def spawnRoom(self):
-    clearConsole()
-
-    layer = Layer(50, 50)
-
-    self.inRoom.width *= 5
-    self.inRoom.height *= 5
-
-    drawNode(layer, self.inRoom)
-    print(layer.shape)
 
   def movePlayer(self, movement:Literal["up", "down", "left", "right"]):
     self.position += self.directions[movement]

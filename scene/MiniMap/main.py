@@ -8,9 +8,9 @@ from scene.schema import Scene
 
 from scene.MiniMap.constants import *
 
-from scene.MiniMap.utils import *
 from scene.MiniMap.node import BinaryRoom, Node
 from scene.MiniMap.types.layerOrder import LayerOrder
+from scene.MiniMap.utils import clearConsole, setCursorShow, drawNode
 
 from rendering.types.prop import Prop
 from rendering.layer import Layer
@@ -23,8 +23,8 @@ class MiniMap(Scene):
   __debugging__ = False
 
   # BSP 알고리즘에 사용할 자원
-  __minimum_divide_rate = 0.35
-  __maximum_divide_rate = 0.65
+  __minimum_divide_rate = 0.39
+  __maximum_divide_rate = 0.61
 
   __max_depth = 0
 
@@ -145,8 +145,8 @@ class MiniMap(Scene):
     room:BinaryRoom
     # 최하위 깊이일 경우,
     if n == self.__max_depth:
-      width = min(tree.width - 2, round(uniform(10, tree.width - 1))) # 최소 너비 10
-      height = round(uniform(5, tree.height - 1)) # 최소 높이 5
+      width = min(tree.width - 2, round(uniform(10, tree.width / 2 - 1))) # 최소 너비 10
+      height = round(uniform(5, tree.height / 2 - 1)) # 최소 높이 5
       top = tree.top + round(uniform(1, tree.height - height - 1))
       left = tree.left + round(uniform(1, tree.width - width - 1))
       room = BinaryRoom(width, height, left, top)
@@ -252,10 +252,10 @@ class MiniMap(Scene):
     self.player.isInRoom = True
   def __drawPlayer(self):
     if self.__activeRoom != None:
-      self.__layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 50))
+      self.__layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 40))
       drawNode(self.__layers[LayerOrder.Room], self.__activeRoom, Prop.Room, Prop.ActiveWall)
     elif self.__latestRoom != None:
-      self.__layers[LayerOrder.UI].clear(50)
+      self.__layers[LayerOrder.UI].clear(40)
       drawNode(self.__layers[LayerOrder.Room], self.__latestRoom, Prop.Room)
     # 플레이어 표기
     self.__layers[LayerOrder.Player].clear()
@@ -294,8 +294,8 @@ class MiniMap(Scene):
       self.player.isInRoom = True
   def __updatePlayerUI(self):
     self.__layers[LayerOrder.UI].writeText(
-      f"Lv. {self.player.stats.level: <10} Curse {self.player.stats.curse: <10} $ {self.player.stats.money: <5} Hp. {self.player.stats.health: <5} Pw. {self.player.stats.power: <5} Dp. {self.player.stats.defense: <5} Energy {self.player.stats.energy: <5} Xp {self.player.stats.exp} / {self.player.stats.nextExp}",
-      (0, 51)
+      f"Lv. {self.player.stats.level: <10} Curse {self.player.stats.curse: <10} $ {self.player.stats.money: <5} Hp. {self.player.stats.health: <5} Pw. {self.player.stats.power: <5} Def. {self.player.stats.defense: <5} Energy {self.player.stats.energy: <5} Xp {self.player.stats.exp} / {self.player.stats.nextExp}",
+      (0, 41)
     )
 
   # 게임 맵 초기화
@@ -312,11 +312,14 @@ class MiniMap(Scene):
   def __onPress(self, key:Key):
     if key == KeyCode.from_char('q'):
       self.__processQuit()
+    # 방 입장 코드
     if key == Key.enter and self.__activeRoom != None:
       self.__running__ = False
       self.__listener.stop()
-      self.player.inRoom = self.__activeRoom
-      self.player.spawnRoom()
+      self.manager.setGlobalVariable("inRoom", self.__activeRoom)
+      self.manager.setGlobalVariable("rooms", self.rooms)
+      self.manager.changeScene(1)
+    # 움직이기 코드
     movement = self.__getMovement(key)
     if movement != None and movement not in self.__pressedMovements:
       self.__pressedMovements.append(movement)

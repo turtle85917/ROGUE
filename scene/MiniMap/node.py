@@ -32,5 +32,14 @@ class BinaryRoom:
     self.right = self.width + self.left - 1
     self.bottom = self.height + self.top - 1
 
+  def repos(self, top:int, left:int):
+    '''
+    위치를 초기화홥니다.
+    '''
+    self.top = top
+    self.left = left
+    self.right = self.width + self.left - 1
+    self.bottom = self.height + self.top - 1
+
   def calculateCenter(self)->tuple[int,int]:
     return (self.left + self.right) // 2, (self.top + self.bottom) // 2
