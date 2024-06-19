@@ -1,16 +1,17 @@
 from typing import Union, Literal
 from random import uniform, choice
 
-from pynput.keyboard import Key, KeyCode, Listener
+from pynput.keyboard import Key
 
-from scene.manager import SceneManager
 from scene.schema import Scene
+from scene.manager import SceneManager
+from scene.utils import clearConsole, getKey
 
 from scene.MiniMap.constants import *
 
 from scene.MiniMap.node import BinaryRoom, Node
-from scene.MiniMap.types.layerOrder import LayerOrder
-from scene.MiniMap.utils import clearConsole, setCursorShow, drawNode
+from scene.MiniMap.types.order import LayerOrder
+from scene.MiniMap.utils import drawNode
 
 from rendering.types.prop import Prop
 from rendering.layer import Layer
@@ -42,19 +43,8 @@ class MiniMap(Scene):
   __activeRoom:BinaryRoom
   __latestRoom:BinaryRoom
 
-  __running__ = True
-  __listener:Listener
-
-  __movementKeys:dict[str, list[Key]] = {
-    "up": [KeyCode.from_char('w'), Key.up],
-    "down": [KeyCode.from_char('s'), Key.down],
-    "left": [KeyCode.from_char('a'), Key.left],
-    "right": [KeyCode.from_char('d'), Key.right]
-  }
-  __pressedMovements:list[Union[None, Literal["up", "down", "left", "right"]]]
-
-  rooms:list[BinaryRoom] = []
-  player:Player
+  __rooms:list[BinaryRoom] = []
+  __player:Player
 
   manager:SceneManager
 
@@ -86,19 +76,9 @@ class MiniMap(Scene):
   def render(self):
     self.__spawnPlayer()
     self.__printMap()
+    self.manager.listen()
 
-    try:
-      with Listener(
-        on_press=self.__onPress,
-        on_release=self.__onRelease,
-        suppress=True
-      ) as listener:
-        self.__listener = listener
-        self.__listener.join()
-    except:
-      pass
-
-    '''
+  '''
   BSP 알고리즘을 사용하여 랜덤하게 맵을 생성함.
   1. 공간 생성
   2. 방 생성
@@ -151,7 +131,7 @@ class MiniMap(Scene):
       left = tree.left + round(uniform(1, tree.width - width - 1))
       room = BinaryRoom(width, height, left, top)
       room.node = tree
-      self.rooms.append(room)
+      self.__rooms.append(room)
     else:
       # 최하위 깊이가 아닐 때, 반환할 방 방향 정하기
       tree.otherNode1.room = self.__createRoom(tree.otherNode1, n + 1)
@@ -247,9 +227,9 @@ class MiniMap(Scene):
 
   # 플레이어 관련
   def __spawnPlayer(self):
-    self.__activeRoom = self.__latestRoom = choice(self.rooms)
-    self.player = Player(self.__activeRoom)
-    self.player.isInRoom = True
+    self.__activeRoom = self.__latestRoom = choice(self.__rooms)
+    self.__player = Player(self.__activeRoom)
+    self.__player.isInRoom = True
   def __drawPlayer(self):
     if self.__activeRoom != None:
       self.__layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 40))
@@ -259,86 +239,68 @@ class MiniMap(Scene):
       drawNode(self.__layers[LayerOrder.Room], self.__latestRoom, Prop.Room)
     # 플레이어 표기
     self.__layers[LayerOrder.Player].clear()
-    self.__layers[LayerOrder.Player].setPixel(self.player.position.x, self.player.position.y, Prop.Player)
-  def __movePlayer(self, movement:str):
+    self.__layers[LayerOrder.Player].setPixel(self.__player.position.x, self.__player.position.y, Prop.Player)
+  def __movePlayer(self):
     def getRoomInPlayer()->BinaryRoom|None:
-      filterdRooms = list(filter(lambda x:x.top < self.player.position.y < x.bottom and x.left < self.player.position.x < x.right, self.rooms))
+      filterdRooms = list(filter(lambda x:x.top < self.__player.position.y < x.bottom and x.left < self.__player.position.x < x.right, self.__rooms))
       if(len(filterdRooms) == 0):
         return None
       return list(filterdRooms)[0]
-    self.player.movePlayer(movement)
-    direction = self.player.directions[self.player.lastDirection]
+    if self.__player.lastDirection == None:
+      return
+    direction = self.__player.directions[self.__player.lastDirection]
     # 방 안에 있는 상황이며, 방 외곽에 있을 경우, 안으로 들어오게 함
-    if self.player.isInRoom and self.__activeRoom != None and (self.__activeRoom.top + 1 > self.player.position.y or self.player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.player.position.x or self.player.position.x > self.__activeRoom.right - 1):
-      self.player.position -= direction
+    if self.__player.isInRoom and self.__activeRoom != None and (self.__activeRoom.top + 1 > self.__player.position.y or self.__player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.__player.position.x or self.__player.position.x > self.__activeRoom.right - 1):
+      self.__player.position -= direction
     # 들어온 방 확인하기
     room = getRoomInPlayer()
     if self.__activeRoom != None:
       self.__latestRoom = self.__activeRoom
     self.__activeRoom = room
     # 문 있는지 체크하기
-    forward = self.player.position + direction
+    forward = self.__player.position + direction
 
     forwardPixel = self.__layers[LayerOrder.Door].getPixel(forward.x, forward.y)
-    pixel = self.__layers[LayerOrder.Door].getPixel(self.player.position.x, self.player.position.y)
-    pixel2 = self.__layers[LayerOrder.Road].getPixel(self.player.position.x, self.player.position.y)
+    pixel = self.__layers[LayerOrder.Door].getPixel(self.__player.position.x, self.__player.position.y)
+    pixel2 = self.__layers[LayerOrder.Road].getPixel(self.__player.position.x, self.__player.position.y)
 
     # 앞에 있는 픽셀 혹은 위에 있는 픽셀이 문일 경우
     if forwardPixel == Prop.Door or pixel == Prop.Door:
-      self.player.isInRoom = False
+      self.__player.isInRoom = False
     # 플레이어가 길 위에 없을 경우
-    elif not self.player.isInRoom and pixel2 != Prop.Road:
-      self.player.position -= direction
+    elif not self.__player.isInRoom and pixel2 != Prop.Road:
+      self.__player.position -= direction
     # 방 안에 있는 상황이 아니며, 플레이어가 문 위에 있지 않으면 방 안에 있음을 확정
-    elif not self.player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
-      self.player.isInRoom = True
+    elif not self.__player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
+      self.__player.isInRoom = True
   def __updatePlayerUI(self):
     self.__layers[LayerOrder.UI].writeText(
-      f"Lv. {self.player.stats.level: <10} Curse {self.player.stats.curse: <10} $ {self.player.stats.money: <5} Hp. {self.player.stats.health: <5} Pw. {self.player.stats.power: <5} Def. {self.player.stats.defense: <5} Energy {self.player.stats.energy: <5} Xp {self.player.stats.exp} / {self.player.stats.nextExp}",
+      f"Lv. {self.__player.stats.level: <10} Curse {self.__player.stats.curse: <10} $ {self.__player.stats.money: <5} Hp. {self.__player.stats.health: <5} Pw. {self.__player.stats.power: <5} Def. {self.__player.stats.defense: <5} Energy {self.__player.stats.energy: <5} Xp {self.__player.stats.exp} / {self.__player.stats.nextExp}",
       (0, 41)
     )
 
   # 게임 맵 초기화
   def __printMap(self):
     clearConsole()
+    self.__movePlayer()
     self.__drawPlayer()
     self.__updatePlayerUI()
     render = Render()
     render.print(render.addLayers(WIDTH, UI_HEIGHT, self.__layers))
 
   def __checkOverlappingRooms(self, x:int, y:int)->list[BinaryRoom]:
-    return list(filter(lambda i:i.top <= y <= i.bottom and i.left <= x <= i.right, self.rooms))
+    return list(filter(lambda i:i.top <= y <= i.bottom and i.left <= x <= i.right, self.__rooms))
 
-  def __onPress(self, key:Key):
-    if key == KeyCode.from_char('q'):
-      self.__processQuit()
+  def _onPress(self, key:Key):
+    key = getKey(key)
     # 방 입장 코드
     if key == Key.enter and self.__activeRoom != None:
-      self.__running__ = False
-      self.__listener.stop()
       self.manager.setGlobalVariable("inRoom", self.__activeRoom)
-      self.manager.setGlobalVariable("rooms", self.rooms)
+      self.manager.setGlobalVariable("rooms", self.__rooms)
+      self.manager.stopListen()
       self.manager.changeScene(1)
     # 움직이기 코드
-    movement = self.__getMovement(key)
-    if movement != None and movement not in self.__pressedMovements:
-      self.__pressedMovements.append(movement)
-      if len(self.__pressedMovements) > 3:
-        self.__pressedMovements = []
-  def __onRelease(self, key:Key):
-    movement = self.__getMovement(key)
-    if movement != None and movement in self.__pressedMovements:
-      self.__pressedMovements.remove(movement)
-      self.__movePlayer(movement)
-      self.__printMap()
-
-  def __getMovement(self, key:Key)->str|None:
-    for k, v in self.__movementKeys.items():
-      if key in v:
-        return k
-    return None
-
-  def __processQuit(self):
-    self.__running__ = False
-    setCursorShow(True)
-    self.__listener.stop()
+    self.__player.checkMovement(key)
+    self.__player.movePlayer(key, lambda: self.__printMap())
+  def _onRelease(self, key:Key):
+    pass

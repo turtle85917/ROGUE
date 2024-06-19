@@ -1,19 +1,24 @@
 from typing import Optional, Any
 
+from pynput.keyboard import Listener
+
 from scene.schema import Scene
+from scene.utils import setCursorShow, getKey
 
 class SceneManager:
   __scenes__:list[Scene]
 
-  __defaultScene:Scene
+  __defaultSceneIndex:Scene
   __currentSceneIndex:int
 
   __globalVariables:dict[Any, Any]
+  __globalListener:Listener
 
   def __init__(self, scenes:Optional[list[Scene]] = None):
     self.__scenes__ = scenes if scenes is not None else []
     self.__currentSceneIndex = 0
     self.__globalVariables = {}
+    self.__globalListener = None
 
   def render(self, scene:Scene):
     '''
@@ -30,15 +35,13 @@ class SceneManager:
 
     @param index 씬의 인덱스
     '''
-    self.__defaultScene = self.__scenes__[index]
+    self.__defaultSceneIndex = index
 
   def changeDefaultScene(self):
     '''
     기본 씬으로 전환합니다.
     '''
-    self.__defaultScene.manager = self
-    self.__defaultScene.render()
-    self.__currentSceneIndex = self.__scenes__.index(self.__defaultScene)
+    self.changeScene(self.__defaultSceneIndex)
   def changeScene(self, sceneIndex:int):
     '''
     씬으로 전환합니다.
@@ -47,9 +50,13 @@ class SceneManager:
     '''
     if len(self.__scenes__) <= sceneIndex:
       raise Exception("Not found scene")
+
+    if self.__globalListener != None:
+      self.__globalListener.stop()
+
+    self.__currentSceneIndex = sceneIndex
     self.__scenes__[sceneIndex].manager = self
     self.__scenes__[sceneIndex].render()
-    self.__currentSceneIndex = sceneIndex
 
   def setGlobalVariable(self, key:Any, value:Any):
     '''
@@ -67,6 +74,35 @@ class SceneManager:
     '''
     return self.__globalVariables[key]
 
+  def listen(self):
+    '''
+    키보드 입력을 받기 시작합니다.
+    '''
+    try:
+      currentScene = self.__scenes__[self.__currentSceneIndex]
+      with Listener(
+        on_press=self.__onPress,
+        on_release=currentScene._onRelease,
+        suppress=True
+      ) as listener:
+        self.__globalListener = listener
+        self.__globalListener.join()
+    except:
+      self.__processQuit()
+  def stopListen(self):
+    self.__globalListener.stop()
+
   @property
   def currentSceneName(self)->int:
     return self.__scenes__[self.__currentSceneIndex].sceneName
+
+  def __onPress(self, key):
+    if getKey(key) == "q":
+      self.__processQuit()
+    else:
+      currentScene = self.__scenes__[self.__currentSceneIndex]
+      currentScene._onPress(key)
+  def __processQuit(self):
+    self.__running__ = False
+    setCursorShow(True)
+    self.__globalListener.stop()
