@@ -1,9 +1,14 @@
 from typing import Optional, Any
+import time
 
 from pynput.keyboard import Listener
 
+from rendering.layer import Layer
+from rendering.main import Render
+
 from scene.schema import Scene
-from scene.utils import setCursorShow, getKey
+from scene.constants import *
+from scene.utils import setCursorShow, getKey, clearConsole
 
 class SceneManager:
   __scenes__:list[Scene]
@@ -14,21 +19,24 @@ class SceneManager:
   __globalVariables:dict[Any, Any]
   __globalListener:Listener
 
+  __fps:float = 1. / 60 # frames per second
+  __currentFrame:int = 0
+  __lastTimeAt:int
+  __isUpdating:bool = False
+
+  __render:Render
+  __layers:list[Layer] = []
+
   def __init__(self, scenes:Optional[list[Scene]] = None):
     self.__scenes__ = scenes if scenes is not None else []
     self.__currentSceneIndex = 0
     self.__globalVariables = {}
     self.__globalListener = None
 
-  def render(self, scene:Scene):
-    '''
-    씬 목록에 씬을 추가합니다.
+    self.__layers = []
+    self.__render = Render()
+    Layer.createNewLayers(self.__layers, LAYERS, WIDTH, HEIGHT)
 
-    @param scene 추가할 씬
-    '''
-    if scene not in self.__scenes__:
-      self.__scenes__.append(scene)
-    return self
   def setDefaultScene(self, index:int):
     '''
     기본 씬을 지정합니다.
@@ -51,12 +59,24 @@ class SceneManager:
     if len(self.__scenes__) <= sceneIndex:
       raise Exception("Not found scene")
 
+    # 전역 리스너 중단
     if self.__globalListener != None:
       self.__globalListener.stop()
+    # 업데이트 중단
+    if self.__isUpdating:
+      self.__isUpdating = False
+
+    self.clearAllLayers()
 
     self.__currentSceneIndex = sceneIndex
-    self.__scenes__[sceneIndex].manager = self
-    self.__scenes__[sceneIndex].render()
+    self.currentScene.manager = self
+    self.currentScene.render()
+
+    # 씬이 업데이트가 가능하면 매 프레임마다 업데이트를 한다.
+    if self.currentScene.updatable:
+      self.__currentFrame = 0
+      self.__lastTimeAt = time.time()
+      self.__update()
 
   def setGlobalVariable(self, key:Any, value:Any):
     '''
@@ -92,10 +112,42 @@ class SceneManager:
   def stopListen(self):
     self.__globalListener.stop()
 
-  @property
-  def currentSceneName(self)->int:
-    return self.__scenes__[self.__currentSceneIndex].sceneName
+  def print(self):
+    self.__render.print(self.__render.addLayers(WIDTH, HEIGHT, self.__layers))
+  def clearAllLayers(self):
+    for layer in self.__layers:
+      layer.clear()
 
+  @property
+  def currentScene(self)->Scene:
+    return self.__scenes__[self.__currentSceneIndex]
+  @property
+  def frame(self)->int:
+    return self.__currentFrame
+  @property
+  def layers(self)->list[Layer]:
+    return self.__layers
+
+  def __update(self):
+    '''
+    업데이트 호출 시, 다음과 같은 과정을 거친다.
+
+    - 해당 씬의 업데이트 함수 호출
+    - 레이어 업데이트
+    - 최종적으로 그린 후, 출력
+    - 다음 프레임까지 대기 걸기
+    '''
+    while self.__isUpdating:
+      self.__lastTimeAt = time.time()
+      # 함수 호출
+      self.currentScene.update()
+      # 레이어 업데이트
+      clearConsole()
+      self.print()
+      # 최종 작업
+      self.__currentFrame += 1
+      elasped = time.time() - self.__lastTimeAt
+      time.sleep(max(0, self.__fps - elasped))
   def __onPress(self, key):
     if getKey(key) == "q":
       self.__processQuit()

@@ -1,0 +1,3 @@
+WIDTH = 140
+HEIGHT = 42
+LAYERS = 6

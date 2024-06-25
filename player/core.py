@@ -1,4 +1,4 @@
-from typing import Literal, Union, Callable
+from typing import Literal, Callable
 
 from pynput.keyboard import Key
 from position import Position
@@ -19,7 +19,6 @@ class Player:
   }
 
   stats:Stats
-
   isInRoom:bool
 
   __movementKeys:dict[str, list[Key]] = {
@@ -28,24 +27,16 @@ class Player:
     "left": ['a', Key.left],
     "right": ['d', Key.right]
   }
-  __pressedMovements:list[Union[None, Literal["up", "down", "left", "right"]]]
 
   def __init__(self, room:BinaryRoom):
     left, top = room.calculateCenter()
     self.lastDirection = None
     self.position = Position(left, top)
-    self.__pressedMovements = []
-
     self.stats = Stats()
 
-  def checkMovement(self, key):
-    movement = self.__getMovement(key)
-    if movement != None and movement not in self.__pressedMovements:
-      self.__pressedMovements.append(movement)
   def movePlayer(self, key, callback:Callable[[], None]|None):
     movement = self.__getMovement(key)
-    if movement != None and movement in self.__pressedMovements:
-      self.__pressedMovements.remove(movement)
+    if movement in self.__movementKeys:
       # 움직이기
       self.position += self.directions[movement]
       self.lastDirection = movement

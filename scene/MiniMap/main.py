@@ -1,4 +1,3 @@
-from typing import Union, Literal
 from random import uniform, choice
 
 from pynput.keyboard import Key
@@ -7,15 +6,14 @@ from scene.schema import Scene
 from scene.manager import SceneManager
 from scene.utils import clearConsole, getKey
 
-from scene.MiniMap.constants import *
+from scene.constants import WIDTH, HEIGHT
+from scene.MiniMap.constants import MAX_DEPTH
 
 from scene.MiniMap.node import BinaryRoom, Node
 from scene.MiniMap.types.order import LayerOrder
 from scene.MiniMap.utils import drawNode
 
 from rendering.types.prop import Prop
-from rendering.layer import Layer
-from rendering.main import Render
 
 from player.core import Player
 
@@ -29,17 +27,6 @@ class MiniMap(Scene):
 
   __max_depth = 0
 
-  '''
-  레이어 안내
-  - 레이어 1: 디버그 노드, 길 용
-  - 레이어 2: 방
-  - 레이어 3: 문
-  - 레이어 4: 플레이어
-  - 레이어 5: ???
-  - 레이어 6: UI
-  '''
-  __layers:list[Layer] = []
-
   __activeRoom:BinaryRoom
   __latestRoom:BinaryRoom
 
@@ -52,19 +39,14 @@ class MiniMap(Scene):
     super().__init__()
 
     self.sceneName = "MiniMap"
+    self.updatable = False
 
-    # 레이어 초기화
-    Layer.createNewLayers(self.__layers, 6, WIDTH, HEIGHT)
-    self.__layers[LayerOrder.UI] = Layer(WIDTH, UI_HEIGHT)
-
-    # 값 초기화
-    self.__pressedMovements = []
-
+  def render(self):
     # 루트 생성하기
     self.__max_depth = MAX_DEPTH
     treeNode = Node(WIDTH, HEIGHT, 0, 0)
     if self.__debugging__:
-      drawNode(self.__layers[LayerOrder.Road], treeNode)
+      drawNode(self.manager.layers[LayerOrder.Road], treeNode)
 
     # 공간 분할하기
     self.__divideMap(treeNode, 0)
@@ -73,7 +55,6 @@ class MiniMap(Scene):
     self.__spawnDoors(treeNode, 0)
     self.__spawnDoorsFromBywayRooms(treeNode, 0)
 
-  def render(self):
     self.__spawnPlayer()
     self.__printMap()
     self.manager.listen()
@@ -100,7 +81,7 @@ class MiniMap(Scene):
       # 선긋기
       if self.__debugging__:
         for y in range(tree.top, tree.top + tree.height):
-          self.__layers[LayerOrder.Road].setPixel(tree.left + split, y, Prop.Wall)
+          self.manager.layers[LayerOrder.Road].setPixel(tree.left + split, y, Prop.Wall)
     # height이 더 길다면
     else:
       # 세로 분할하여 생긴 두 노드 구하기
@@ -109,7 +90,7 @@ class MiniMap(Scene):
       # 선긋기
       if self.__debugging__:
         for x in range(tree.left, tree.left + tree.width):
-          self.__layers[LayerOrder.Road].setPixel(x, tree.top + split, Prop.Wall)
+          self.manager.layers[LayerOrder.Road].setPixel(x, tree.top + split, Prop.Wall)
     ################
     tempNode1.parentNode = tree
     tempNode2.parentNode = tree
@@ -152,12 +133,12 @@ class MiniMap(Scene):
       endY -= 1
     # x 축을 먼저 연결 후, y 축 연결
     for x in range(min(x1, x2), endX + 1):
-      self.__layers[LayerOrder.Road].setPixel(x, y1, Prop.Road)
+      self.manager.layers[LayerOrder.Road].setPixel(x, y1, Prop.Road)
     for y in range(min(y1, y2), max(y1, y2) + 1):
-      self.__layers[LayerOrder.Road].setPixel(x2, y, Prop.Road)
+      self.manager.layers[LayerOrder.Road].setPixel(x2, y, Prop.Road)
 
-    drawNode(self.__layers[LayerOrder.Room], tree.otherNode1.room, Prop.Room)
-    drawNode(self.__layers[LayerOrder.Room], tree.otherNode2.room, Prop.Room)
+    drawNode(self.manager.layers[LayerOrder.Room], tree.otherNode1.room, Prop.Room)
+    drawNode(self.manager.layers[LayerOrder.Room], tree.otherNode2.room, Prop.Room)
 
     self.__generateRoad(tree.otherNode1, n + 1)
     self.__generateRoad(tree.otherNode2, n + 1)
@@ -172,28 +153,28 @@ class MiniMap(Scene):
     if tree.isRowDivided:
       # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
       if -room2.height / 2 <= abs(y1 - y2) <= room2.height / 2:
-        self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
-        self.__layers[LayerOrder.Door].setPixel(room2.left, y1, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(room2.left, y1, Prop.Door)
       else:
         if y1 > y2:
-          self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
-          self.__layers[LayerOrder.Door].setPixel(x2, room2.bottom, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(x2, room2.bottom, Prop.Door)
         else:
-          self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
-          self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
     # 세로 분할
     if not tree.isRowDivided:
       # 방1의 중앙 혹은 방2의 중앙이 방2 혹은 방1 안에 있는지
       if -room1.width / 2 <= abs(x1 - x2) <= room1.width / 2:
-        self.__layers[LayerOrder.Door].setPixel(x2, room1.bottom, Prop.Door)
-        self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(x2, room1.bottom, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
       else:
         if x1 > x2:
-          self.__layers[LayerOrder.Door].setPixel(room1.left, y1, Prop.Door)
-          self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(room1.left, y1, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
         else:
-          self.__layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
-          self.__layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(room1.right, y1, Prop.Door)
+          self.manager.layers[LayerOrder.Door].setPixel(x2, room2.top, Prop.Door)
 
     self.__spawnDoors(tree.otherNode1, n + 1)
     self.__spawnDoors(tree.otherNode2, n + 1)
@@ -210,16 +191,16 @@ class MiniMap(Scene):
       if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
       for r in rs:
         if r.node.parentNode == goalNode1.parentNode: continue
-        self.__layers[LayerOrder.Door].setPixel(r.left, y1, Prop.Door)
-        self.__layers[LayerOrder.Door].setPixel(r.right, y1, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(r.left, y1, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(r.right, y1, Prop.Door)
     for y in range(min(y1, y2), max(y1, y2) + 1):
       rs = self.__checkOverlappingRooms(x2, y)
       if tree.otherNode1.room in rs: rs.remove(tree.otherNode1.room)
       if tree.otherNode2.room in rs: rs.remove(tree.otherNode2.room)
       for r in rs:
         if r.node.parentNode == goalNode2.parentNode: continue
-        self.__layers[LayerOrder.Door].setPixel(x2, r.top, Prop.Door)
-        self.__layers[LayerOrder.Door].setPixel(x2, r.bottom, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(x2, r.top, Prop.Door)
+        self.manager.layers[LayerOrder.Door].setPixel(x2, r.bottom, Prop.Door)
     self.__spawnDoorsFromBywayRooms(tree.otherNode1, n + 1)
     self.__spawnDoorsFromBywayRooms(tree.otherNode2, n + 1)
 
@@ -232,14 +213,14 @@ class MiniMap(Scene):
     self.__player.isInRoom = True
   def __drawPlayer(self):
     if self.__activeRoom != None:
-      self.__layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 40))
-      drawNode(self.__layers[LayerOrder.Room], self.__activeRoom, Prop.Room, Prop.ActiveWall)
+      self.manager.layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 40))
+      drawNode(self.manager.layers[LayerOrder.Room], self.__activeRoom, Prop.Room, Prop.ActiveWall)
     elif self.__latestRoom != None:
-      self.__layers[LayerOrder.UI].clear(40)
-      drawNode(self.__layers[LayerOrder.Room], self.__latestRoom, Prop.Room)
+      self.manager.layers[LayerOrder.UI].clear(40)
+      drawNode(self.manager.layers[LayerOrder.Room], self.__latestRoom, Prop.Room)
     # 플레이어 표기
-    self.__layers[LayerOrder.Player].clear()
-    self.__layers[LayerOrder.Player].setPixel(self.__player.position.x, self.__player.position.y, Prop.Player)
+    self.manager.layers[LayerOrder.Player].clear()
+    self.manager.layers[LayerOrder.Player].setPixel(self.__player.position.x, self.__player.position.y, Prop.Player)
   def __movePlayer(self):
     def getRoomInPlayer()->BinaryRoom|None:
       filterdRooms = list(filter(lambda x:x.top < self.__player.position.y < x.bottom and x.left < self.__player.position.x < x.right, self.__rooms))
@@ -260,9 +241,9 @@ class MiniMap(Scene):
     # 문 있는지 체크하기
     forward = self.__player.position + direction
 
-    forwardPixel = self.__layers[LayerOrder.Door].getPixel(forward.x, forward.y)
-    pixel = self.__layers[LayerOrder.Door].getPixel(self.__player.position.x, self.__player.position.y)
-    pixel2 = self.__layers[LayerOrder.Road].getPixel(self.__player.position.x, self.__player.position.y)
+    forwardPixel = self.manager.layers[LayerOrder.Door].getPixel(forward.x, forward.y)
+    pixel = self.manager.layers[LayerOrder.Door].getPixel(self.__player.position.x, self.__player.position.y)
+    pixel2 = self.manager.layers[LayerOrder.Road].getPixel(self.__player.position.x, self.__player.position.y)
 
     # 앞에 있는 픽셀 혹은 위에 있는 픽셀이 문일 경우
     if forwardPixel == Prop.Door or pixel == Prop.Door:
@@ -274,7 +255,7 @@ class MiniMap(Scene):
     elif not self.__player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
       self.__player.isInRoom = True
   def __updatePlayerUI(self):
-    self.__layers[LayerOrder.UI].writeText(
+    self.manager.layers[LayerOrder.UI].writeText(
       f"Lv. {self.__player.stats.level: <10} Curse {self.__player.stats.curse: <10} $ {self.__player.stats.money: <5} Hp. {self.__player.stats.health: <5} Pw. {self.__player.stats.power: <5} Def. {self.__player.stats.defense: <5} Energy {self.__player.stats.energy: <5} Xp {self.__player.stats.exp} / {self.__player.stats.nextExp}",
       (0, 41)
     )
@@ -285,8 +266,7 @@ class MiniMap(Scene):
     self.__movePlayer()
     self.__drawPlayer()
     self.__updatePlayerUI()
-    render = Render()
-    render.print(render.addLayers(WIDTH, UI_HEIGHT, self.__layers))
+    self.manager.print()
 
   def __checkOverlappingRooms(self, x:int, y:int)->list[BinaryRoom]:
     return list(filter(lambda i:i.top <= y <= i.bottom and i.left <= x <= i.right, self.__rooms))
@@ -300,7 +280,4 @@ class MiniMap(Scene):
       self.manager.stopListen()
       self.manager.changeScene(1)
     # 움직이기 코드
-    self.__player.checkMovement(key)
     self.__player.movePlayer(key, lambda: self.__printMap())
-  def _onRelease(self, key:Key):
-    pass
