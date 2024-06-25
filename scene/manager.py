@@ -3,7 +3,7 @@ import time
 
 from pynput.keyboard import Listener
 
-from player.core import Player
+from object.player.core import Player
 
 from rendering.layer import Layer
 from rendering.main import Render

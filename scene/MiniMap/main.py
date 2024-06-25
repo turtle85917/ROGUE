@@ -275,6 +275,7 @@ class MiniMap(Scene):
         "inRoom": self.__activeRoom,
         "rooms": self.__rooms
       })
+      self.manager.player.stats.energy -= 4
       self.manager.stopListen()
       self.manager.changeScene(1)
     # 움직이기 코드

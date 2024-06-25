@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from object.enemy.base import BaseEnemy
+from object.position import Position
+
 from scene.MiniMap.constants import *
 
 class Node:
@@ -21,6 +24,8 @@ class BinaryRoom:
   right = 0
   bottom = 0
 
+  enemies:list[dict[BaseEnemy, Position]]
+
   node:Node
 
   def __init__(self, width:int, height:int, left:int, top:int):
@@ -28,6 +33,8 @@ class BinaryRoom:
     self.height = height
     self.left = left
     self.top = top
+
+    self.enemies = []
 
     self.right = self.width + self.left - 1
     self.bottom = self.height + self.top - 1

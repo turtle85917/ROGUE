@@ -1,10 +1,8 @@
-class Stats:
-  level:int
+from object.types.stats import BaseStats
+
+class Stats(BaseStats):
   curse:int
   money:int
-  health:int
-  power:int
-  defense:int
   energy:int
   exp:int
   nextExp:int

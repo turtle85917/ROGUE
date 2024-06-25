@@ -1,12 +1,12 @@
 from typing import Literal, Callable
 
 from pynput.keyboard import Key
-from position import Position
+from object.position import Position
 
 from scene.MiniMap.node import BinaryRoom
 from scene.MiniMap.utils import *
 
-from player.stats import Stats
+from object.player.stats import Stats
 
 class Player:
   position:Position
