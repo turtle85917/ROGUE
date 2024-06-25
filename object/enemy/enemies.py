@@ -1,8 +1,9 @@
-from object.enemy.base import BaseEnemy, BaseStats
+from object.base import BaseEnemy, BaseStats
+from rendering.style import Style, AnsiColor
 
 class Bat(BaseEnemy):
   id = "Bat"
-  icon = "b"
+  icon = Style("b", AnsiColor.TextBlue)
   stats = BaseStats()
 
   def __init__(self):

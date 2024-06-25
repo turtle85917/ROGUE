@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from object.base import BaseObject
+from object.position import Position
 from rendering.types.prop import Prop
 from rendering.utils import *
 
 class Layer:
   __map:list[list[Prop]] = []
+  __config:list[dict[BaseObject, Position]]
   EMPTY = Prop.Cell
 
   def __init__(self, width:int, height:int):
@@ -26,6 +29,9 @@ class Layer:
     return self.__map[y][x]
   def setPixel(self, x:int, y:int, prop:Prop):
     self.__map[y][x] = prop
+  def setObject(self, x:int, y:int, obj:dict[BaseObject, Position]):
+    self.__map[y][x] = Prop.Object
+    self.__config.append(obj)
 
   def writeText(self, txt:str, pos:tuple[int,int]):
     x = pos[0]

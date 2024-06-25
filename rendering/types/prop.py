@@ -1,4 +1,5 @@
 from enum import StrEnum
+from rendering.style import Style, AnsiColor
 
 # 맵 오브젝트
 class Prop(StrEnum):
@@ -6,8 +7,9 @@ class Prop(StrEnum):
 
   Room = '.'
   Wall = '#'
-  ActiveWall = '\033[31m#\033[0m'
-  Road = '\033[36m#\033[0m'
+  ActiveWall = Style('#', AnsiColor.TextRed)
+  Road = Style('#', AnsiColor.TextCyan)
   Door = '+'
+  Object = ''
 
   Player = '@'

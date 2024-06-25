@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from object.enemy.base import BaseEnemy
+from object.base import BaseEnemy
 from object.position import Position
 
 from scene.MiniMap.constants import *

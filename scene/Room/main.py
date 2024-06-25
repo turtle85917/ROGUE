@@ -1,9 +1,9 @@
 from math import ceil
 
-from scene.schema import Scene
-
+from object.enemy import enemies
 from rendering.types.prop import Prop
 
+from scene.schema import Scene
 from scene.manager import SceneManager
 from scene.constants import WIDTH, HEIGHT
 from scene.utils import clearConsole, getKey
@@ -42,6 +42,11 @@ class Room(Scene):
 
     # 방 그리기
     drawNode(self.manager.layers[LayerOrder.Room], self.__room, Prop.Room)
+
+    # 임시 적 놓기
+    self.manager.layers[LayerOrder.Objects].setObject(24, 32, {
+      [enemies[0]]: (24, 32)
+    })
 
     # 플레이어 놓기
     self.manager.player.enterRoom(self.__room)

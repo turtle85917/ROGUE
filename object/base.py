@@ -1,6 +1,8 @@
 from object.types.stats import BaseStats
 
-class BaseEnemy():
+class BaseObject():
   id: str
   icon: str
+
+class BaseEnemy(BaseObject):
   stats:BaseStats
