@@ -3,6 +3,8 @@ import time
 
 from pynput.keyboard import Listener
 
+from player.core import Player
+
 from rendering.layer import Layer
 from rendering.main import Render
 
@@ -24,8 +26,9 @@ class SceneManager:
   __lastTimeAt:int
   __isUpdating:bool = False
 
+  player:Player
+  layers:list[Layer] = []
   __render:Render
-  __layers:list[Layer] = []
 
   def __init__(self, scenes:Optional[list[Scene]] = None):
     self.__scenes__ = scenes if scenes is not None else []
@@ -33,9 +36,10 @@ class SceneManager:
     self.__globalVariables = {}
     self.__globalListener = None
 
-    self.__layers = []
+    self.layers = []
+    self.player = Player()
     self.__render = Render()
-    Layer.createNewLayers(self.__layers, LAYERS, WIDTH, HEIGHT)
+    Layer.createNewLayers(self.layers, LAYERS, WIDTH, HEIGHT)
 
   def setDefaultScene(self, index:int):
     '''
@@ -86,6 +90,14 @@ class SceneManager:
     @param value 값
     '''
     self.__globalVariables[key] = value
+  def setGlobalVariables(self, vars:dict[Any, Any]):
+    '''
+    전역 변수를 설정합니다.
+
+    @param vars 키-값
+    '''
+    for k, v in vars.items():
+      self.__globalVariables[k] = v
   def getGlobalVariable(self, key:Any)->Any:
     '''
     전역 변수를 가져옵니다.
@@ -113,9 +125,9 @@ class SceneManager:
     self.__globalListener.stop()
 
   def print(self):
-    self.__render.print(self.__render.addLayers(WIDTH, HEIGHT, self.__layers))
+    self.__render.print(self.__render.addLayers(WIDTH, HEIGHT, self.layers))
   def clearAllLayers(self):
-    for layer in self.__layers:
+    for layer in self.layers:
       layer.clear()
 
   @property
@@ -124,9 +136,6 @@ class SceneManager:
   @property
   def frame(self)->int:
     return self.__currentFrame
-  @property
-  def layers(self)->list[Layer]:
-    return self.__layers
 
   def __update(self):
     '''

@@ -2,10 +2,7 @@ from math import ceil
 
 from scene.schema import Scene
 
-from rendering.main import Render
 from rendering.types.prop import Prop
-
-from player.core import Player
 
 from scene.manager import SceneManager
 from scene.constants import WIDTH, HEIGHT
@@ -18,7 +15,6 @@ from scene.Room.types.order import LayerOrder
 
 class Room(Scene):
   __room:BinaryRoom
-  __player:Player
 
   __height = HEIGHT - 2
 
@@ -48,8 +44,8 @@ class Room(Scene):
     drawNode(self.manager.layers[LayerOrder.Room], self.__room, Prop.Room)
 
     # 플레이어 놓기
-    self.__player = Player(self.__room)
-    self.manager.layers[LayerOrder.Player].setPixel(self.__player.position.x, self.__player.position.y, Prop.Player)
+    self.manager.player.enterRoom(self.__room)
+    self.manager.layers[LayerOrder.Player].setPixel(self.manager.player.position.x, self.manager.player.position.y, Prop.Player)
 
     # 출력
     self.__printPlayer()
@@ -58,13 +54,13 @@ class Room(Scene):
   def __printPlayer(self):
     clearConsole()
     self.manager.layers[LayerOrder.Player].clear()
-    self.manager.layers[LayerOrder.Player].setPixel(self.__player.position.x, self.__player.position.y, Prop.Player)
+    self.manager.layers[LayerOrder.Player].setPixel(self.manager.player.position.x, self.manager.player.position.y, Prop.Player)
     self.manager.layers[LayerOrder.UI].writeText(
-      f"Lv. {self.__player.stats.level: <10} Curse {self.__player.stats.curse: <10} $ {self.__player.stats.money: <5} Hp. {self.__player.stats.health: <5} Pw. {self.__player.stats.power: <5} Def. {self.__player.stats.defense: <5} Energy {self.__player.stats.energy: <5} Xp {self.__player.stats.exp} / {self.__player.stats.nextExp}",
+      f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}",
       (0, 41)
     )
     self.manager.print()
 
   def _onPress(self, key):
     key = getKey(key)
-    self.__player.movePlayer(key, lambda: self.__printPlayer())
+    self.manager.player.movePlayer(key, lambda: self.__printPlayer(), room=self.__room)

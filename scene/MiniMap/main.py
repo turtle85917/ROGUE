@@ -15,8 +15,6 @@ from scene.MiniMap.utils import drawNode
 
 from rendering.types.prop import Prop
 
-from player.core import Player
-
 class MiniMap(Scene):
   # 디버깅용
   __debugging__ = False
@@ -31,7 +29,6 @@ class MiniMap(Scene):
   __latestRoom:BinaryRoom
 
   __rooms:list[BinaryRoom] = []
-  __player:Player
 
   manager:SceneManager
 
@@ -44,7 +41,7 @@ class MiniMap(Scene):
   def render(self):
     # 루트 생성하기
     self.__max_depth = MAX_DEPTH
-    treeNode = Node(WIDTH, HEIGHT, 0, 0)
+    treeNode = Node(WIDTH, HEIGHT - 1, 0, 0)
     if self.__debugging__:
       drawNode(self.manager.layers[LayerOrder.Road], treeNode)
 
@@ -209,56 +206,55 @@ class MiniMap(Scene):
   # 플레이어 관련
   def __spawnPlayer(self):
     self.__activeRoom = self.__latestRoom = choice(self.__rooms)
-    self.__player = Player(self.__activeRoom)
-    self.__player.isInRoom = True
+    self.manager.player.enterRoom(self.__activeRoom)
   def __drawPlayer(self):
     if self.__activeRoom != None:
-      self.manager.layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 40))
       drawNode(self.manager.layers[LayerOrder.Room], self.__activeRoom, Prop.Room, Prop.ActiveWall)
     elif self.__latestRoom != None:
-      self.manager.layers[LayerOrder.UI].clear(40)
       drawNode(self.manager.layers[LayerOrder.Room], self.__latestRoom, Prop.Room)
     # 플레이어 표기
     self.manager.layers[LayerOrder.Player].clear()
-    self.manager.layers[LayerOrder.Player].setPixel(self.__player.position.x, self.__player.position.y, Prop.Player)
+    self.manager.layers[LayerOrder.Player].setPixel(self.manager.player.position.x, self.manager.player.position.y, Prop.Player)
   def __movePlayer(self):
     def getRoomInPlayer()->BinaryRoom|None:
-      filterdRooms = list(filter(lambda x:x.top < self.__player.position.y < x.bottom and x.left < self.__player.position.x < x.right, self.__rooms))
+      filterdRooms = list(filter(lambda x:x.top < self.manager.player.position.y < x.bottom and x.left < self.manager.player.position.x < x.right, self.__rooms))
       if(len(filterdRooms) == 0):
         return None
       return list(filterdRooms)[0]
-    if self.__player.lastDirection == None:
+    if self.manager.player.lastDirection == None:
       return
-    direction = self.__player.directions[self.__player.lastDirection]
+    direction = self.manager.player.directions[self.manager.player.lastDirection]
     # 방 안에 있는 상황이며, 방 외곽에 있을 경우, 안으로 들어오게 함
-    if self.__player.isInRoom and self.__activeRoom != None and (self.__activeRoom.top + 1 > self.__player.position.y or self.__player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.__player.position.x or self.__player.position.x > self.__activeRoom.right - 1):
-      self.__player.position -= direction
+    if self.manager.player.isInRoom and self.__activeRoom != None and (self.__activeRoom.top + 1 > self.manager.player.position.y or self.manager.player.position.y > self.__activeRoom.bottom - 1 or self.__activeRoom.left + 1 > self.manager.player.position.x or self.manager.player.position.x > self.__activeRoom.right - 1):
+      self.manager.player.position -= direction
     # 들어온 방 확인하기
     room = getRoomInPlayer()
     if self.__activeRoom != None:
       self.__latestRoom = self.__activeRoom
     self.__activeRoom = room
     # 문 있는지 체크하기
-    forward = self.__player.position + direction
+    forward = self.manager.player.position + direction
 
     forwardPixel = self.manager.layers[LayerOrder.Door].getPixel(forward.x, forward.y)
-    pixel = self.manager.layers[LayerOrder.Door].getPixel(self.__player.position.x, self.__player.position.y)
-    pixel2 = self.manager.layers[LayerOrder.Road].getPixel(self.__player.position.x, self.__player.position.y)
+    pixel = self.manager.layers[LayerOrder.Door].getPixel(self.manager.player.position.x, self.manager.player.position.y)
+    pixel2 = self.manager.layers[LayerOrder.Road].getPixel(self.manager.player.position.x, self.manager.player.position.y)
+    pixel3 = self.manager.layers[LayerOrder.Room].getPixel(self.manager.player.position.x, self.manager.player.position.y)
 
     # 앞에 있는 픽셀 혹은 위에 있는 픽셀이 문일 경우
     if forwardPixel == Prop.Door or pixel == Prop.Door:
-      self.__player.isInRoom = False
+      self.manager.player.isInRoom = False
     # 플레이어가 길 위에 없을 경우
-    elif not self.__player.isInRoom and pixel2 != Prop.Road:
-      self.__player.position -= direction
+    elif not self.manager.player.isInRoom and pixel2 != Prop.Road and pixel3 != Prop.Room:
+      self.manager.player.position -= direction
     # 방 안에 있는 상황이 아니며, 플레이어가 문 위에 있지 않으면 방 안에 있음을 확정
-    elif not self.__player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
-      self.__player.isInRoom = True
+    elif not self.manager.player.isInRoom and self.__activeRoom != None and pixel != Prop.Door:
+      self.manager.player.isInRoom = True
   def __updatePlayerUI(self):
-    self.manager.layers[LayerOrder.UI].writeText(
-      f"Lv. {self.__player.stats.level: <10} Curse {self.__player.stats.curse: <10} $ {self.__player.stats.money: <5} Hp. {self.__player.stats.health: <5} Pw. {self.__player.stats.power: <5} Def. {self.__player.stats.defense: <5} Energy {self.__player.stats.energy: <5} Xp {self.__player.stats.exp} / {self.__player.stats.nextExp}",
-      (0, 41)
-    )
+    if self.__activeRoom != None:
+      self.manager.layers[LayerOrder.UI].writeText("Enter 키를 눌러 방에 입장하기", (0, 40))
+    else:
+      self.manager.layers[LayerOrder.UI].clear(40)
+    self.manager.layers[LayerOrder.UI].writeText(f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}", (0, 41))
 
   # 게임 맵 초기화
   def __printMap(self):
@@ -275,9 +271,11 @@ class MiniMap(Scene):
     key = getKey(key)
     # 방 입장 코드
     if key == Key.enter and self.__activeRoom != None:
-      self.manager.setGlobalVariable("inRoom", self.__activeRoom)
-      self.manager.setGlobalVariable("rooms", self.__rooms)
+      self.manager.setGlobalVariables({
+        "inRoom": self.__activeRoom,
+        "rooms": self.__rooms
+      })
       self.manager.stopListen()
       self.manager.changeScene(1)
     # 움직이기 코드
-    self.__player.movePlayer(key, lambda: self.__printMap())
+    self.manager.player.movePlayer(key, lambda: self.__printMap())
