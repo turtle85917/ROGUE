@@ -271,10 +271,8 @@ class MiniMap(Scene):
     key = getKey(key)
     # 방 입장 코드
     if key == Key.enter and self.__activeRoom != None:
-      self.manager.setGlobalVariables({
-        "inRoom": self.__activeRoom,
-        "rooms": self.__rooms
-      })
+      self.manager.setGlobalVariable("inRoom", self.__activeRoom)
+      self.manager.setGlobalVariable("rooms", self.__rooms)
       self.manager.player.stats.energy -= 4
       self.manager.stopListen()
       self.manager.changeScene(1)

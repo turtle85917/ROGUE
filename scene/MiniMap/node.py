@@ -24,7 +24,7 @@ class BinaryRoom:
   right = 0
   bottom = 0
 
-  enemies:list[dict[BaseEnemy, Position]]
+  enemies:list[tuple[BaseEnemy, Position]]
 
   node:Node
 

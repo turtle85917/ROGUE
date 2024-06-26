@@ -23,6 +23,16 @@ class Position:
     위치와 숫자의 곱한 새로운 위치를 반환합니다.
     '''
     return Position(self.x * val, self.y * val)
+  def __eq__(self, other:Position)->bool:
+    '''
+    두 위치가 같은지 확인합니다.
+    '''
+    return self.x == other.x and self.y == other.y
+  def __ne__(self, other:Position)->bool:
+    '''
+    두 위치가 다른지 확인합니다.
+    '''
+    return self.x != other.x or self.y != other.y
   def __repr__(self):
     return f"({self.x}, {self.y})"
 

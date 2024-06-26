@@ -1,15 +1,26 @@
 from object.base import BaseEnemy, BaseStats
-from rendering.style import Style, AnsiColor
+from rendering.types.ansi import AnsiColor
 
 class Bat(BaseEnemy):
   id = "Bat"
-  icon = Style("b", AnsiColor.TextBlue)
-  stats = BaseStats()
+  icon = "b"
+  color = AnsiColor.TextBlue
+  stats = BaseStats(
+    level = 1,
+    health = 10,
+    power = 2,
+    defense = 1
+  )
 
-  def __init__(self):
-    self.stats.level = 1
-    self.stats.health = 10
-    self.stats.power = 2
-    self.stats.defense = 1
+class Slime(BaseEnemy):
+  id = "Slime"
+  icon = "s"
+  color = AnsiColor.TextGreen
+  stats = BaseStats(
+    level = 1,
+    health = 5,
+    power = 1,
+    defense = 0
+  )
 
-enemis:list[BaseEnemy] = [Bat]
+enemies:list[BaseEnemy] = [Bat, Slime]

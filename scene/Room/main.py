@@ -1,6 +1,8 @@
+from random import randint
 from math import ceil
 
-from object.enemy import enemies
+from object.position import Position
+from object.enemy.enemies import enemies
 from rendering.types.prop import Prop
 
 from scene.schema import Scene
@@ -24,7 +26,7 @@ class Room(Scene):
     super().__init__()
 
     self.sceneName = "Room"
-    self.updatable = False
+    self.updatable = True
 
   def render(self):
     clearConsole()
@@ -35,7 +37,10 @@ class Room(Scene):
     self.__room = self.manager.getGlobalVariable("inRoom")
     # 들어온 방 설정하기
     ratio = self.__room.width / self.__room.height
-    ratio *= 3
+    if ratio < 2:
+      ratio *= 2.4
+    else:
+      ratio *= 1.6
     self.__room.width = ceil(self.__room.width * ratio)
     self.__room.height = ceil(self.__room.height * ratio)
     self.__room.repos(self.__height // 2 - self.__room.height // 2, WIDTH // 2 - self.__room.width // 2)
@@ -43,10 +48,20 @@ class Room(Scene):
     # 방 그리기
     drawNode(self.manager.layers[LayerOrder.Room], self.__room, Prop.Room)
 
-    # 임시 적 놓기
-    self.manager.layers[LayerOrder.Objects].setObject(24, 32, {
-      [enemies[0]]: (24, 32)
-    })
+    # 적 놓기
+    enemyCount = randint(2, 5) # 2 ~ 5 적 배치
+    if self.__room.width *  self.__room.height > 60:
+      enemyCount = randint(4, 8)
+    for _ in range(enemyCount):
+      position = Position(0, 0)
+      while True:
+        position = Position(randint(self.__room.left + 1, self.__room.right - 1), randint(self.__room.top + 1, self.__room.bottom - 1))
+        overlaps = list(filter(lambda x:x[1] == position, self.__room.enemies))
+        if len(overlaps) == 0 and self.manager.player.position != position:
+          break
+      enemy = enemies[randint(0, len(enemies) - 1)]
+      self.__room.enemies.append((enemy(), position))
+      self.manager.layers[LayerOrder.Objects].setObject(position.x, position.y, enemy)
 
     # 플레이어 놓기
     self.manager.player.enterRoom(self.__room)
@@ -66,6 +81,8 @@ class Room(Scene):
     )
     self.manager.print()
 
+  def update():
+    pass
   def _onPress(self, key):
     key = getKey(key)
     self.manager.player.movePlayer(key, lambda: self.__printPlayer(), room=self.__room)

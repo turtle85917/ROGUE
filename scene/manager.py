@@ -72,15 +72,15 @@ class SceneManager:
 
     self.clearAllLayers()
 
-    self.__currentSceneIndex = sceneIndex
-    self.currentScene.manager = self
-    self.currentScene.render()
-
     # 씬이 업데이트가 가능하면 매 프레임마다 업데이트를 한다.
     if self.currentScene.updatable:
       self.__currentFrame = 0
       self.__lastTimeAt = time.time()
       self.__update()
+
+    self.__currentSceneIndex = sceneIndex
+    self.currentScene.manager = self
+    self.currentScene.render()
 
   def setGlobalVariable(self, key:Any, value:Any):
     '''
@@ -90,14 +90,6 @@ class SceneManager:
     @param value 값
     '''
     self.__globalVariables[key] = value
-  def setGlobalVariables(self, vars:dict[Any, Any]):
-    '''
-    전역 변수를 설정합니다.
-
-    @param vars 키-값
-    '''
-    for k, v in vars.items():
-      self.__globalVariables[k] = v
   def getGlobalVariable(self, key:Any)->Any:
     '''
     전역 변수를 가져옵니다.
@@ -146,6 +138,7 @@ class SceneManager:
     - 최종적으로 그린 후, 출력
     - 다음 프레임까지 대기 걸기
     '''
+    self.__isUpdating = True
     while self.__isUpdating:
       self.__lastTimeAt = time.time()
       # 함수 호출
@@ -165,5 +158,6 @@ class SceneManager:
       currentScene._onPress(key)
   def __processQuit(self):
     self.__running__ = False
+    self.__isUpdating = False
     setCursorShow(True)
     self.__globalListener.stop()

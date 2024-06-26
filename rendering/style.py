@@ -16,9 +16,15 @@ class Style:
     self.__styles.append(style)
     return self
 
-  def __repr__(self):
-    head = f"{self.__ESC}["
-    for style in self.__styles:
-      head += f"{style}m;"
-    head = head[:-1]
+  def out(self)->str:
+    head = f"{self.__ESC}[{";".join(map(str, self.__styles))}m"
     return f"{head}{self.__text}{self.__close}"
+
+  @staticmethod
+  def bgColor(txColor:AnsiColor)->AnsiColor:
+    if txColor // 10 != 3:
+      raise ValueError("Invaild text color")
+    return txColor + 10
+
+  def __repr__(self)->str:
+    return self.out()

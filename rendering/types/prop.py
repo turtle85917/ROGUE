@@ -5,11 +5,10 @@ from rendering.style import Style, AnsiColor
 class Prop(StrEnum):
   Cell = ' '
 
-  Room = '.'
-  Wall = '#'
-  ActiveWall = Style('#', AnsiColor.TextRed)
-  Road = Style('#', AnsiColor.TextCyan)
-  Door = '+'
-  Object = ''
-
-  Player = '@'
+  Room       = '.'
+  Wall       = '#'
+  ActiveWall = Style('#', AnsiColor.TextRed).out()
+  Road       = Style('#', AnsiColor.TextCyan).out()
+  Door       = '+'
+  Object     = ''
+  Player     = '@'
