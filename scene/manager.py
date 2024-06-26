@@ -1,5 +1,6 @@
 from typing import Optional, Any
 import time
+import keyboard
 
 from pynput.keyboard import Listener
 
@@ -70,17 +71,20 @@ class SceneManager:
     if self.__isUpdating:
       self.__isUpdating = False
 
+    # 현재 씬 체크 및 화면 초기화
+    self.__currentSceneIndex = sceneIndex
     self.clearAllLayers()
+
+    # 매니저 할당
+    self.currentScene.manager = self
+
+    self.currentScene.render()
 
     # 씬이 업데이트가 가능하면 매 프레임마다 업데이트를 한다.
     if self.currentScene.updatable:
       self.__currentFrame = 0
       self.__lastTimeAt = time.time()
       self.__update()
-
-    self.__currentSceneIndex = sceneIndex
-    self.currentScene.manager = self
-    self.currentScene.render()
 
   def setGlobalVariable(self, key:Any, value:Any):
     '''
@@ -140,11 +144,14 @@ class SceneManager:
     '''
     self.__isUpdating = True
     while self.__isUpdating:
+      # if keyboard.recordqqq
       self.__lastTimeAt = time.time()
+      # exit 시도 체크하기
+      #clearConsole()
+      print("\033[0;0H")
       # 함수 호출
       self.currentScene.update()
       # 레이어 업데이트
-      clearConsole()
       self.print()
       # 최종 작업
       self.__currentFrame += 1

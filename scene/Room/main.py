@@ -1,6 +1,8 @@
 from random import randint
 from math import ceil
 
+from pynput.keyboard import Listener
+
 from object.position import Position
 from object.enemy.enemies import enemies
 from rendering.types.prop import Prop
@@ -72,17 +74,17 @@ class Room(Scene):
     self.manager.listen()
 
   def __printPlayer(self):
-    clearConsole()
+    #clearConsole()
     self.manager.layers[LayerOrder.Player].clear()
     self.manager.layers[LayerOrder.Player].setPixel(self.manager.player.position.x, self.manager.player.position.y, Prop.Player)
     self.manager.layers[LayerOrder.UI].writeText(
       f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}",
       (0, 41)
     )
-    self.manager.print()
+    #self.manager.print()
 
-  def update():
-    pass
+  def update(self):
+    self.__printPlayer()
   def _onPress(self, key):
     key = getKey(key)
     self.manager.player.movePlayer(key, lambda: self.__printPlayer(), room=self.__room)
