@@ -1,7 +1,7 @@
 from random import randint
 from math import ceil
 
-from pynput.keyboard import Listener
+from utils.input import Input
 
 from object.position import Position
 from object.enemy.enemies import enemies
@@ -71,7 +71,7 @@ class Room(Scene):
 
     # 출력
     self.__printPlayer()
-    self.manager.listen()
+    #self.manager.listen()
 
   def __printPlayer(self):
     #clearConsole()
@@ -84,6 +84,7 @@ class Room(Scene):
     #self.manager.print()
 
   def update(self):
+    
     self.__printPlayer()
   def _onPress(self, key):
     key = getKey(key)

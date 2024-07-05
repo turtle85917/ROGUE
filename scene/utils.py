@@ -18,5 +18,5 @@ def setCursorShow(isShow:bool):
   '''
   print(f"\u001B[?25{'h' if isShow else 'l'}", end='')
 
-def getKey(key:Key|KeyCode)->str|Key|None:
+def getKey(key:Key|KeyCode|str)->str|Key|None:
   return key.char if isinstance(key, KeyCode) else key

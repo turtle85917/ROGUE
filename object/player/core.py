@@ -38,7 +38,7 @@ class Player:
     self.position = Position(left, top)
     self.isInRoom = True
 
-  def movePlayer(self, key, callback:Callable[[], None]|None, room:BinaryRoom|None = None):
+  def movePlayer(self, key, callback:Callable[[], None]|None = None, room:BinaryRoom|None = None):
     movement = self.__getMovement(key)
     if movement in self.__movementKeys:
       # 움직이기
@@ -49,6 +49,9 @@ class Player:
       # 콜백 함수
       if callback != None:
         callback()
+  def forwardPlayer(self, left:bool, up:bool):
+    self.movePlayer('a' if left else 'd')
+    self.movePlayer('w' if up else 's')
 
   def __getMovement(self, key)->str|None:
     for k, v in self.__movementKeys.items():

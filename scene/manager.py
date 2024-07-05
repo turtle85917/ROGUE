@@ -4,6 +4,7 @@ import keyboard
 
 from pynput.keyboard import Listener
 
+from utils.input import Input
 from object.player.core import Player
 
 from rendering.layer import Layer
@@ -22,9 +23,8 @@ class SceneManager:
   __globalVariables:dict[Any, Any]
   __globalListener:Listener
 
-  __fps:float = 1. / 60 # frames per second
+  __fps:int = 60 # frames per second
   __currentFrame:int = 0
-  __lastTimeAt:int
   __isUpdating:bool = False
 
   player:Player
@@ -83,7 +83,6 @@ class SceneManager:
     # 씬이 업데이트가 가능하면 매 프레임마다 업데이트를 한다.
     if self.currentScene.updatable:
       self.__currentFrame = 0
-      self.__lastTimeAt = time.time()
       self.__update()
 
   def setGlobalVariable(self, key:Any, value:Any):
@@ -144,8 +143,8 @@ class SceneManager:
     '''
     self.__isUpdating = True
     while self.__isUpdating:
-      # if keyboard.recordqqq
-      self.__lastTimeAt = time.time()
+      if Input.get_key("q"):
+        self.__processQuit()
       # exit 시도 체크하기
       #clearConsole()
       print("\033[0;0H")
@@ -155,8 +154,7 @@ class SceneManager:
       self.print()
       # 최종 작업
       self.__currentFrame += 1
-      elasped = time.time() - self.__lastTimeAt
-      time.sleep(max(0, self.__fps - elasped))
+      time.sleep(0.01)
   def __onPress(self, key):
     if getKey(key) == "q":
       self.__processQuit()
@@ -166,5 +164,6 @@ class SceneManager:
   def __processQuit(self):
     self.__running__ = False
     self.__isUpdating = False
-    setCursorShow(True)
     self.__globalListener.stop()
+    keyboard.unhook_all()
+    setCursorShow(True)
