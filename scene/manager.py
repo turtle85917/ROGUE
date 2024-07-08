@@ -20,14 +20,18 @@ class SceneManager:
 
   __globalVariables:dict[Any, Any]
 
-  __currentFrame:int = 0
   __isUpdating:bool = False
 
   player:Player
   layers:list[Layer] = []
 
+  # 프레임 측정
+  __frame:int = 0
+  __time:int
+
   __render:Render
   __window:CursesWindow
+
   pressedKey:str|None
 
   def __init__(self, scenes:Optional[list[Scene]] = None):
@@ -95,7 +99,8 @@ class SceneManager:
     self.currentScene.render()
 
     # 매 프레임마다 업데이트를 한다.
-    self.__currentFrame = 0
+    self.__frame = 0
+    self.__time = 0
     self.__update()
 
   def setGlobalVariable(self, key:Any, value:Any):
@@ -123,7 +128,7 @@ class SceneManager:
     return self.__scenes__[self.__currentSceneIndex]
   @property
   def frame(self)->int:
-    return self.__currentFrame
+    return self.__frame
 
   def __update(self):
     '''
@@ -142,14 +147,14 @@ class SceneManager:
       # 종료 시도
       if self.pressedKey == 'q' or self.pressedKey == "esc":
         self.__processQuit()
-      #self.__window.erase()
       # 함수 호출
       self.currentScene.update()
       self.__window.refresh()
       # 레이어 업데이트
       self.__render.print(self.__render.addLayers(WIDTH, HEIGHT, self.layers))
       # 최종 작업
-      self.__currentFrame += 1
+      self.__time += 1
+      self.__frame = self.__time // 10
       time.sleep(0.01)
   def __checkPressedKey(self, key:int):
     match key:

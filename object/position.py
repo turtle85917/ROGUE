@@ -1,4 +1,5 @@
 from __future__ import annotations
+from math import floor
 
 class Position:
   __x:int
@@ -22,7 +23,7 @@ class Position:
     '''
     위치와 숫자의 곱한 새로운 위치를 반환합니다.
     '''
-    return Position(self.x * val, self.y * val)
+    return Position(floor(self.x * val), floor(self.y * val))
   def __eq__(self, other:Position)->bool:
     '''
     두 위치가 같은지 확인합니다.

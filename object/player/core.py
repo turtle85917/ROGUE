@@ -1,15 +1,14 @@
-from typing import Literal, Callable
+from typing import Callable
 
 from object.position import Position
 
 from scene.MiniMap.node import BinaryRoom
-from scene.MiniMap.utils import *
 
 from object.player.stats import Stats
 
 class Player:
   position:Position
-  lastDirection:Literal["up", "down", "left", "right"] | None
+  lastMovement:str|None
   directions:dict[str, Position] = {
     "up": Position(0, -1),
     "down": Position(0, 1),
@@ -19,6 +18,7 @@ class Player:
 
   stats:Stats
   isInRoom:bool
+  isDisarmed:bool # 방 안으로 들어온 상태인지
 
   __movementKeys:dict[str, list[str]] = {
     "up": ['w', "up"],
@@ -26,11 +26,25 @@ class Player:
     "left": ['a', "left"],
     "right": ['d', "right"]
   }
+  __mappingKeys:dict[str, list[str]] = {
+    "up": ['w'],
+    "down": ['s'],
+    "left": ['a'],
+    "right": ['d'],
+    "attack-up": ["up"],
+    "attack-down": ["down"],
+    "attack-left": ["left"],
+    "attack-right": ["right"],
+    "pick-up-item": ["e"],
+    "exit": ["r"]
+  }
+  __movingMovement:list[str] = ["up", "down", "left", "right"]
 
   def __init__(self):
-    self.lastDirection = None
+    self.lastMovement = None
     self.stats = Stats()
     self.position = Position(0, 0)
+    self.isDisarmed = False
 
   def enterRoom(self, room:BinaryRoom):
     left, top = room.calculateCenter()
@@ -38,22 +52,20 @@ class Player:
     self.isInRoom = True
 
   def movePlayer(self, key, callback:Callable[[], None]|None = None, room:BinaryRoom|None = None):
-    movement = self.__getMovement(key)
-    if movement in self.__movementKeys:
+    movement = self.getMovement(key)
+    if movement in self.__movingMovement:
       # 움직이기
       self.position += self.directions[movement]
       if room != None and self.isInRoom and (room.top + 1 > self.position.y or self.position.y > room.bottom - 1 or room.left + 1 > self.position.x or self.position.x > room.right - 1):
         self.position -= self.directions[movement]
-      self.lastDirection = movement
+      self.lastMovement = movement
       # 콜백 함수
       if callback != None:
         callback()
-  def forwardPlayer(self, left:bool, up:bool):
-    self.movePlayer('a' if left else 'd')
-    self.movePlayer('w' if up else 's')
 
-  def __getMovement(self, key)->str|None:
-    for k, v in self.__movementKeys.items():
+  def getMovement(self, key)->str|None:
+    keys = self.__mappingKeys if self.isDisarmed else self.__movementKeys
+    for k, v in keys.items():
       if key in v:
         return k
     return None

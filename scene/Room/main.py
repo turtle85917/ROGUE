@@ -1,7 +1,9 @@
 from random import randint
 from math import ceil
+import time
 
 from object.position import Position
+from _types.direction import Direction
 from object.enemy.enemies import enemies
 
 from rendering.types.prop import Prop
@@ -17,11 +19,28 @@ from scene.MiniMap.node import BinaryRoom, Node
 from scene.MiniMap.utils import drawNode
 
 from scene.Room.types.order import LayerOrder
+from scene.Room.types.bubble import Bubble
 
 class Room(Scene):
   __room:BinaryRoom
 
   __height = HEIGHT - 2
+
+  # 버블 세팅
+  __bubble = ['O', 'o']
+  __bubbleColors = [21, 22, 10, 18]
+  # 버블 목록
+  __bubbles:list[Bubble] = []
+  __bubbleQueues:list[Bubble] = []
+  # 발사 시간
+  __shout_time = 0
+
+  __directions:dict[Direction, Position] = {
+    Direction.Up: Position(0, -1),
+    Direction.Down: Position(0, 1),
+    Direction.Left: Position(-1, 0),
+    Direction.Right: Position(1, 0)
+  }
 
   manager:SceneManager
 
@@ -46,7 +65,7 @@ class Room(Scene):
     self.__room.repos(self.__height // 2 - self.__room.height // 2, WIDTH // 2 - self.__room.width // 2)
 
     # 방 그리기
-    drawNode(self.manager.layers[LayerOrder.Room], self.__room, prop2cell(Prop.Room), prop2cell(Prop.Wall))
+    drawNode(self.manager.layers[LayerOrder.Rooms], self.__room, prop2cell(Prop.Room), prop2cell(Prop.Wall))
 
     # 적 놓기
     enemyCount = randint(2, 5) # 2 ~ 5 적 배치
@@ -69,6 +88,46 @@ class Room(Scene):
 
     # 출력
     self.__printPlayer()
+  def update(self):
+    self.manager.player.movePlayer(self.manager.pressedKey, lambda: self.__printPlayer(), room=self.__room)
+    match self.manager.player.getMovement(self.manager.pressedKey):
+      case "attack-up":
+        self.__shoutBubble(Direction.Up)
+      case "attack-down":
+        self.__shoutBubble(Direction.Down)
+      case "attack-left":
+        self.__shoutBubble(Direction.Left)
+      case "attack-right":
+        self.__shoutBubble(Direction.Right)
+    # 버블 업데이트
+    self.manager.layers[LayerOrder.Bubbles].clear()
+    for bubble in self.__bubbles:
+      if bubble in self.__bubbleQueues: continue
+      if time.time() - bubble.life > .8:
+        self.__bubbleQueues.append(bubble)
+        continue
+      sh = self.__bubble[0]
+      # 색상 업데이트
+      if time.time() - bubble.life > .3:
+        bubble.color = self.__bubbleColors[1]
+      if time.time() - bubble.life > .5:
+        bubble.color = self.__bubbleColors[2]
+        sh = self.__bubble[1]
+      if time.time() - bubble.life > .7:
+        bubble.color = self.__bubbleColors[3]
+      # 위치 업데이트
+      self.manager.layers[LayerOrder.Bubbles].setPixelByPosition(bubble.position, Cell(prop=sh, color=bubble.color))
+      bubble.position += self.__directions.get(bubble.direction)
+      # 제한
+      if self.__room.top + 1 > bubble.position.y or bubble.position.y > self.__room.bottom - 1 or self.__room.left + 1 > bubble.position.x or bubble.position.x > self.__room.right - 1:
+        bubble.position -= self.__directions.get(bubble.direction)
+        self.__bubbleQueues.append(bubble)
+        continue
+    # 큐에 올라와진 버블 제거
+    for bubble in self.__bubbleQueues:
+      self.__bubbles.remove(bubble)
+    else:
+      self.__bubbleQueues = []
 
   def __printPlayer(self):
     self.manager.layers[LayerOrder.Player].clear()
@@ -78,5 +137,7 @@ class Room(Scene):
       (0, 41)
     )
 
-  def update(self):
-    self.manager.player.movePlayer(self.manager.pressedKey, lambda: self.__printPlayer(), room=self.__room)
+  def __shoutBubble(self, direction:Direction):
+    if time.time() - self.__shout_time < .2: return
+    self.__shout_time = time.time()
+    self.__bubbles.append(Bubble(life=time.time(), direction=direction, position=self.manager.player.position, color=self.__bubbleColors[0]))
