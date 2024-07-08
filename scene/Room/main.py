@@ -1,16 +1,17 @@
 from random import randint
 from math import ceil
 
-from utils.input import Input
-
 from object.position import Position
 from object.enemy.enemies import enemies
+
 from rendering.types.prop import Prop
+from rendering.types.cell import Cell
+from rendering.layer import Layer
+from rendering.utils import prop2cell
 
 from scene.schema import Scene
 from scene.manager import SceneManager
 from scene.constants import WIDTH, HEIGHT
-from scene.utils import clearConsole, getKey
 
 from scene.MiniMap.node import BinaryRoom, Node
 from scene.MiniMap.utils import drawNode
@@ -28,11 +29,8 @@ class Room(Scene):
     super().__init__()
 
     self.sceneName = "Room"
-    self.updatable = True
 
   def render(self):
-    clearConsole()
-
     background = Node(WIDTH, HEIGHT - 1, 0, 0)
     drawNode(self.manager.layers[LayerOrder.Background], background)
 
@@ -48,7 +46,7 @@ class Room(Scene):
     self.__room.repos(self.__height // 2 - self.__room.height // 2, WIDTH // 2 - self.__room.width // 2)
 
     # 방 그리기
-    drawNode(self.manager.layers[LayerOrder.Room], self.__room, Prop.Room)
+    drawNode(self.manager.layers[LayerOrder.Room], self.__room, prop2cell(Prop.Room), prop2cell(Prop.Wall))
 
     # 적 놓기
     enemyCount = randint(2, 5) # 2 ~ 5 적 배치
@@ -63,29 +61,22 @@ class Room(Scene):
           break
       enemy = enemies[randint(0, len(enemies) - 1)]
       self.__room.enemies.append((enemy(), position))
-      self.manager.layers[LayerOrder.Objects].setObject(position.x, position.y, enemy)
+      self.manager.layers[LayerOrder.Objects].setPixelByPosition(position, Cell(prop=enemy.icon, color=enemy.color))
 
     # 플레이어 놓기
     self.manager.player.enterRoom(self.__room)
-    self.manager.layers[LayerOrder.Player].setPixel(self.manager.player.position.x, self.manager.player.position.y, Prop.Player)
+    self.manager.layers[LayerOrder.Player].setPixelByPosition(self.manager.player.position, Layer.PLAYER)
 
     # 출력
     self.__printPlayer()
-    #self.manager.listen()
 
   def __printPlayer(self):
-    #clearConsole()
     self.manager.layers[LayerOrder.Player].clear()
-    self.manager.layers[LayerOrder.Player].setPixel(self.manager.player.position.x, self.manager.player.position.y, Prop.Player)
+    self.manager.layers[LayerOrder.Player].setPixelByPosition(self.manager.player.position, Layer.PLAYER)
     self.manager.layers[LayerOrder.UI].writeText(
       f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}",
       (0, 41)
     )
-    #self.manager.print()
 
   def update(self):
-    
-    self.__printPlayer()
-  def _onPress(self, key):
-    key = getKey(key)
-    self.manager.player.movePlayer(key, lambda: self.__printPlayer(), room=self.__room)
+    self.manager.player.movePlayer(self.manager.pressedKey, lambda: self.__printPlayer(), room=self.__room)

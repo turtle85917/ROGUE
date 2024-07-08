@@ -1,10 +1,9 @@
 from typing import Optional, Any
+
 import time
-import keyboard
+import curses
+from _types.CurseWindow import CursesWindow
 
-from pynput.keyboard import Listener
-
-from utils.input import Input
 from object.player.core import Player
 
 from rendering.layer import Layer
@@ -12,7 +11,6 @@ from rendering.main import Render
 
 from scene.schema import Scene
 from scene.constants import *
-from scene.utils import setCursorShow, getKey, clearConsole
 
 class SceneManager:
   __scenes__:list[Scene]
@@ -21,25 +19,44 @@ class SceneManager:
   __currentSceneIndex:int
 
   __globalVariables:dict[Any, Any]
-  __globalListener:Listener
 
-  __fps:int = 60 # frames per second
   __currentFrame:int = 0
   __isUpdating:bool = False
 
   player:Player
   layers:list[Layer] = []
+
   __render:Render
+  __window:CursesWindow
+  pressedKey:str|None
 
   def __init__(self, scenes:Optional[list[Scene]] = None):
     self.__scenes__ = scenes if scenes is not None else []
     self.__currentSceneIndex = 0
     self.__globalVariables = {}
-    self.__globalListener = None
 
     self.layers = []
     self.player = Player()
-    self.__render = Render()
+
+    self.__window = curses.initscr()
+    self.__render = Render(self.__window)
+
+    # 윈도우 기본 옵션
+    self.__window.keypad(True)
+    self.__window.nodelay(True)
+
+    curses.noecho()
+    curses.cbreak()
+    curses.curs_set(False)
+
+    # 색상 팔레트 초기화
+    curses.start_color()
+    curses.use_default_colors()
+
+    for i in range(0, 255):
+      curses.init_pair(i + 1, i, -1)
+
+    # 레이어 초기화
     Layer.createNewLayers(self.layers, LAYERS, WIDTH, HEIGHT)
 
   def setDefaultScene(self, index:int):
@@ -64,9 +81,6 @@ class SceneManager:
     if len(self.__scenes__) <= sceneIndex:
       raise Exception("Not found scene")
 
-    # 전역 리스너 중단
-    if self.__globalListener != None:
-      self.__globalListener.stop()
     # 업데이트 중단
     if self.__isUpdating:
       self.__isUpdating = False
@@ -80,10 +94,9 @@ class SceneManager:
 
     self.currentScene.render()
 
-    # 씬이 업데이트가 가능하면 매 프레임마다 업데이트를 한다.
-    if self.currentScene.updatable:
-      self.__currentFrame = 0
-      self.__update()
+    # 매 프레임마다 업데이트를 한다.
+    self.__currentFrame = 0
+    self.__update()
 
   def setGlobalVariable(self, key:Any, value:Any):
     '''
@@ -101,26 +114,6 @@ class SceneManager:
     '''
     return self.__globalVariables[key]
 
-  def listen(self):
-    '''
-    키보드 입력을 받기 시작합니다.
-    '''
-    try:
-      currentScene = self.__scenes__[self.__currentSceneIndex]
-      with Listener(
-        on_press=self.__onPress,
-        on_release=currentScene._onRelease,
-        suppress=True
-      ) as listener:
-        self.__globalListener = listener
-        self.__globalListener.join()
-    except:
-      self.__processQuit()
-  def stopListen(self):
-    self.__globalListener.stop()
-
-  def print(self):
-    self.__render.print(self.__render.addLayers(WIDTH, HEIGHT, self.layers))
   def clearAllLayers(self):
     for layer in self.layers:
       layer.clear()
@@ -143,27 +136,42 @@ class SceneManager:
     '''
     self.__isUpdating = True
     while self.__isUpdating:
-      if Input.get_key("q"):
+      # 키 입력 처리
+      key = self.__window.getch()
+      self.__checkPressedKey(key)
+      # 종료 시도
+      if self.pressedKey == 'q' or self.pressedKey == "esc":
         self.__processQuit()
-      # exit 시도 체크하기
-      #clearConsole()
-      print("\033[0;0H")
+      #self.__window.erase()
       # 함수 호출
       self.currentScene.update()
+      self.__window.refresh()
       # 레이어 업데이트
-      self.print()
+      self.__render.print(self.__render.addLayers(WIDTH, HEIGHT, self.layers))
       # 최종 작업
       self.__currentFrame += 1
       time.sleep(0.01)
-  def __onPress(self, key):
-    if getKey(key) == "q":
-      self.__processQuit()
-    else:
-      currentScene = self.__scenes__[self.__currentSceneIndex]
-      currentScene._onPress(key)
+  def __checkPressedKey(self, key:int):
+    match key:
+      case curses.KEY_LEFT:
+        self.pressedKey = "left"
+      case curses.KEY_RIGHT:
+        self.pressedKey = "right"
+      case curses.KEY_UP:
+        self.pressedKey = "up"
+      case curses.KEY_DOWN:
+        self.pressedKey = "down"
+      case 27: # esc keycode '27'
+        self.pressedKey = "esc"
+      case -1:
+        self.pressedKey = None
+      case _:
+        if chr(key) == '\n': # pressed "enter"
+          self.pressedKey = "enter"
+        else:
+          self.pressedKey = chr(key)
+
   def __processQuit(self):
     self.__running__ = False
     self.__isUpdating = False
-    self.__globalListener.stop()
-    keyboard.unhook_all()
-    setCursorShow(True)
+    curses.curs_set(True)

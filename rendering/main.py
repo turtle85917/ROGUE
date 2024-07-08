@@ -1,22 +1,22 @@
-from rendering.types.prop import Prop
+import curses
+from _types.CurseWindow import CursesWindow
+
+from rendering.types.cell import Cell
 from rendering.layer import Layer
-from rendering.utils import *
+from rendering.utils import getDominantColor
 
 class Render:
   __layers:list[Layer]
+  __window:CursesWindow
 
-  def __init__(self, layers:list[Layer] = []):
+  def __init__(self, window:CursesWindow, layers:list[Layer] = []):
     self.__layers = layers
+    self.__window = window
 
-  def printLayer(self, layer:Layer)->str:
-    print(layer.shape)
-  def print(self, props:list[list[Prop]])->str:
-    text = ''
-    for y in props:
-      for x in y:
-        text += x
-      text += '\n'
-    print(text)
+  def print(self, cells:list[list[Cell]]):
+    for y in range(0, len(cells)):
+      for x in range(0, len(cells[0])):
+        self.__window.addstr(y, x, cells[y][x].prop, curses.color_pair(cells[y][x].color))
 
   def pushLayer(self, layer:Layer):
     self.__layers.append(layer)
@@ -26,7 +26,7 @@ class Render:
   def removeLayer(self, layer:Layer):
     self.__layers.remove(layer)
 
-  def addLayers(self, width:int, height:int, layers:list[Layer] = None)->list[list[Prop]]:
+  def addLayers(self, width:int, height:int, layers:list[Layer] = None)->list[list[Cell]]:
     result = self.__newEmptyLayer(width, height)
     _layers = layers if layers != None else self.__layers
     for layer in _layers:
@@ -38,7 +38,7 @@ class Render:
           elif pixel != Layer.EMPTY:
             result[y][x] = pixel
     return result
-  def subtractLayers(self, width:int, height:int, subtractOrigin:Layer, subtractClip:Layer)->list[list[Prop]]:
+  def subtractLayers(self, width:int, height:int, subtractOrigin:Layer, subtractClip:Layer)->list[list[Cell]]:
     result = self.__newEmptyLayer(width, height)
     for layer in [subtractOrigin, subtractClip]:
       for y in range(height):
@@ -63,5 +63,5 @@ class Render:
     newLayer.load(result)
     return newLayer
 
-  def __newEmptyLayer(self, width:int, height:int)->list[list[Prop]]:
+  def __newEmptyLayer(self, width:int, height:int)->list[list[Cell]]:
     return [[Layer.EMPTY for _ in range(width)] for _ in range(height)]

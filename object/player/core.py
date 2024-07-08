@@ -1,6 +1,5 @@
 from typing import Literal, Callable
 
-from pynput.keyboard import Key
 from object.position import Position
 
 from scene.MiniMap.node import BinaryRoom
@@ -21,11 +20,11 @@ class Player:
   stats:Stats
   isInRoom:bool
 
-  __movementKeys:dict[str, list[Key]] = {
-    "up": ['w', Key.up],
-    "down": ['s', Key.down],
-    "left": ['a', Key.left],
-    "right": ['d', Key.right]
+  __movementKeys:dict[str, list[str]] = {
+    "up": ['w', "up"],
+    "down": ['s', "down"],
+    "left": ['a', "left"],
+    "right": ['d', "right"]
   }
 
   def __init__(self):

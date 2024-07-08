@@ -1,9 +1,10 @@
-from rendering.types.prop import Prop
+from rendering.types.cell import Prop, Cell
 from rendering.layer import Layer
+from rendering.utils import prop2cell
 
 from scene.MiniMap.node import BinaryRoom, Node
 
-def drawNode(layer:Layer, node:Node|BinaryRoom, fill_cell:Prop = Layer.EMPTY, border_cell:Prop = Prop.Wall):
+def drawNode(layer:Layer, node:Node|BinaryRoom, fill_cell:Cell = Layer.EMPTY, border_cell:Cell = prop2cell(Prop.Wall)):
   '''
   노드를 그립니다.
   '''
