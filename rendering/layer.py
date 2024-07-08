@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import re
+
 from object.position import Position
 
 from rendering.types.prop import Prop
 from rendering.types.cell import Cell
 from rendering.utils import prop2cell
+
+MATCH_GROUP = re.compile("\[color (\d)\](.+?)\[\/color\]")
 
 class Layer:
   __map:list[list[Cell]] = []
@@ -39,6 +43,11 @@ class Layer:
   def writeText(self, txt:str, pos:tuple[int,int]):
     x = pos[0]
     y = pos[1]
+    groups = MATCH_GROUP.finditer(txt)
+    for group in groups:
+      # TODO
+      ...
+
     for char in txt:
       self.__map[y][x] = Cell(prop=char, color=0)
       x += 1

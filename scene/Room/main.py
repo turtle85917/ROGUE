@@ -24,7 +24,7 @@ from scene.Room.types.bubble import Bubble
 class Room(Scene):
   __room:BinaryRoom
 
-  __height = HEIGHT - 2
+  __height = HEIGHT - 3
 
   # 버블 세팅
   __bubble = ['O', 'o']
@@ -50,7 +50,7 @@ class Room(Scene):
     self.sceneName = "Room"
 
   def render(self):
-    background = Node(WIDTH, HEIGHT - 1, 0, 0)
+    background = Node(WIDTH, HEIGHT - 2, 0, 0)
     drawNode(self.manager.layers[LayerOrder.Background], background)
 
     self.__room = self.manager.getGlobalVariable("inRoom")
@@ -132,10 +132,8 @@ class Room(Scene):
   def __printPlayer(self):
     self.manager.layers[LayerOrder.Player].clear()
     self.manager.layers[LayerOrder.Player].setPixelByPosition(self.manager.player.position, Layer.PLAYER)
-    self.manager.layers[LayerOrder.UI].writeText(
-      f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}",
-      (0, 41)
-    )
+    self.manager.layers[LayerOrder.UI].writeText("슬라임을 공격하였습니다. HP -1", (0, 40))
+    self.manager.layers[LayerOrder.UI].writeText(f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}", (0, 41))
 
   def __shoutBubble(self, direction:Direction):
     if time.time() - self.__shout_time < .2: return
