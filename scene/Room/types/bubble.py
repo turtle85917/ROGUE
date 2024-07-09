@@ -8,4 +8,3 @@ class Bubble:
   life:int
   direction:Direction
   position:Position
-  color:int

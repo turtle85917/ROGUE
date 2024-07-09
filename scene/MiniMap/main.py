@@ -208,8 +208,6 @@ class MiniMap(Scene):
     self.__spawnDoorsFromBywayRooms(tree.otherNode1, n + 1)
     self.__spawnDoorsFromBywayRooms(tree.otherNode2, n + 1)
 
-    # 플레이어 관련
-
   # 플레이어 관련
   def __spawnPlayer(self):
     self.__activeRoom = self.__latestRoom = choice(self.__rooms)

@@ -6,3 +6,4 @@ from rendering.types.prop import Prop
 class Cell():
   prop:Prop|str
   color:int
+  isText:bool = False

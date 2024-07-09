@@ -89,9 +89,11 @@ class SceneManager:
     if self.__isUpdating:
       self.__isUpdating = False
 
-    # 현재 씬 체크 및 화면 초기화
+    # 현재 씬 체크
     self.__currentSceneIndex = sceneIndex
+    # 화면 초기화
     self.clearAllLayers()
+    self.__window.erase()
 
     # 매니저 할당
     self.currentScene.manager = self
@@ -132,11 +134,12 @@ class SceneManager:
 
   def __update(self):
     '''
-    업데이트 호출 시, 다음과 같은 과정을 거친다.
+    업데이트 과정은 다음과 같은 과정을 반복한다.
 
+    - 키 입력을 처리함
     - 해당 씬의 업데이트 함수 호출
     - 레이어 업데이트
-    - 최종적으로 그린 후, 출력
+    - 레이어 합쳐서 출력
     - 다음 프레임까지 대기 걸기
     '''
     self.__isUpdating = True

@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import re
-
 from object.position import Position
 
 from rendering.types.prop import Prop
 from rendering.types.cell import Cell
 from rendering.utils import prop2cell
-
-MATCH_GROUP = re.compile("\[color (\d)\](.+?)\[\/color\]")
 
 class Layer:
   __map:list[list[Cell]] = []
@@ -40,22 +36,27 @@ class Layer:
   def setPixelByPosition(self, position:Position, cell:Cell):
     self.__map[position.y][position.x] = cell
 
-  def writeText(self, txt:str, pos:tuple[int,int]):
+  def writeText(self, txt:str, pos:tuple[int,int], color:int = 0):
     x = pos[0]
     y = pos[1]
-    groups = MATCH_GROUP.finditer(txt)
-    for group in groups:
-      # TODO
-      ...
-
     for char in txt:
-      self.__map[y][x] = Cell(prop=char, color=0)
+      self.__map[y][x] = Cell(prop=char, color=color, isText=True)
       x += 1
       if x >= self.width: break
       if char == "\n":
         x = pos[0]
         y += 1
         if y >= self.height: break
+  def insertBeforeText(self, txt:str, line:int, color:int = 0):
+    last = 0
+    # 텍스트의 마지막 위치 구하기
+    for i in range(0, self.width):
+      if self.__map[line][i].isText:
+        last = i
+    # 바로 다음칸에 입력하기 위함
+    last += 1
+    # 텍스트 삽입
+    self.writeText(txt, (last, line), color)
 
   def load(self, cells:list[list[Cell]]):
     self.__map = cells

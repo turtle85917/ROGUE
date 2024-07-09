@@ -28,7 +28,6 @@ class Room(Scene):
 
   # 버블 세팅
   __bubble = ['O', 'o']
-  __bubbleColors = [21, 22, 10, 18]
   # 버블 목록
   __bubbles:list[Bubble] = []
   __bubbleQueues:list[Bubble] = []
@@ -103,22 +102,17 @@ class Room(Scene):
     self.manager.layers[LayerOrder.Bubbles].clear()
     for bubble in self.__bubbles:
       if bubble in self.__bubbleQueues: continue
-      if time.time() - bubble.life > .8:
+      if time.time() - bubble.life > .4:
         self.__bubbleQueues.append(bubble)
         continue
       sh = self.__bubble[0]
-      # 색상 업데이트
-      if time.time() - bubble.life > .3:
-        bubble.color = self.__bubbleColors[1]
-      if time.time() - bubble.life > .5:
-        bubble.color = self.__bubbleColors[2]
+      # 버블 업데이트
+      if time.time() - bubble.life > .25:
         sh = self.__bubble[1]
-      if time.time() - bubble.life > .7:
-        bubble.color = self.__bubbleColors[3]
       # 위치 업데이트
-      self.manager.layers[LayerOrder.Bubbles].setPixelByPosition(bubble.position, Cell(prop=sh, color=bubble.color))
+      self.manager.layers[LayerOrder.Bubbles].setPixelByPosition(bubble.position, Cell(prop=sh, color=22))
       bubble.position += self.__directions.get(bubble.direction)
-      # 제한
+      # 움직임 제한
       if self.__room.top + 1 > bubble.position.y or bubble.position.y > self.__room.bottom - 1 or self.__room.left + 1 > bubble.position.x or bubble.position.x > self.__room.right - 1:
         bubble.position -= self.__directions.get(bubble.direction)
         self.__bubbleQueues.append(bubble)
@@ -129,13 +123,18 @@ class Room(Scene):
     else:
       self.__bubbleQueues = []
 
+    # 적 AI 관련
+    for enemy in self.__room.enemies:
+      pass
+
   def __printPlayer(self):
     self.manager.layers[LayerOrder.Player].clear()
     self.manager.layers[LayerOrder.Player].setPixelByPosition(self.manager.player.position, Layer.PLAYER)
-    self.manager.layers[LayerOrder.UI].writeText("슬라임을 공격하였습니다. HP -1", (0, 40))
+    self.manager.layers[LayerOrder.UI].writeText("슬라임을 공격하였습니다. ", (0, 40))
+    self.manager.layers[LayerOrder.UI].insertBeforeText("HP -1", 40, 5)
     self.manager.layers[LayerOrder.UI].writeText(f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}", (0, 41))
 
   def __shoutBubble(self, direction:Direction):
     if time.time() - self.__shout_time < .2: return
     self.__shout_time = time.time()
-    self.__bubbles.append(Bubble(life=time.time(), direction=direction, position=self.manager.player.position, color=self.__bubbleColors[0]))
+    self.__bubbles.append(Bubble(life=time.time(), direction=direction, position=self.manager.player.position))
