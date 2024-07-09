@@ -10,3 +10,5 @@ class Prop(StrEnum):
   Door       = '+'
   Object     = ''
   Player     = '@'
+
+  Light = '*'

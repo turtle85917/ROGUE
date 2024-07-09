@@ -34,12 +34,21 @@ class Position:
     두 위치가 다른지 확인합니다.
     '''
     return self.x != other.x or self.y != other.y
-  def __repr__(self):
+  def __repr__(self)->str:
     return f"({self.x}, {self.y})"
 
   @property
-  def x(self):
+  def x(self)->int:
     return self.__x
   @property
-  def y(self):
+  def y(self)->int:
     return self.__y
+
+  @property
+  def magnitude(self)->int:
+    return (self.x + self.y) ** 2
+  @property
+  def normalized(self)->Position:
+    if self.magnitude == 0:
+      return Position(self.x, self.y)
+    return Position(self.x // self.magnitude, self.y // self.magnitude)

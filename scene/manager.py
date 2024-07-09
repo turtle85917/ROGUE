@@ -27,7 +27,6 @@ class SceneManager:
 
   # 프레임 측정
   __frame:int = 0
-  __time:int
 
   __render:Render
   __window:CursesWindow
@@ -91,6 +90,7 @@ class SceneManager:
 
     # 현재 씬 체크
     self.__currentSceneIndex = sceneIndex
+
     # 화면 초기화
     self.clearAllLayers()
     self.__window.erase()
@@ -102,7 +102,6 @@ class SceneManager:
 
     # 매 프레임마다 업데이트를 한다.
     self.__frame = 0
-    self.__time = 0
     self.__update()
 
   def setGlobalVariable(self, key:Any, value:Any):
@@ -156,8 +155,7 @@ class SceneManager:
       # 레이어 업데이트
       self.__render.print(self.__render.addLayers(WIDTH, HEIGHT, self.layers))
       # 최종 작업
-      self.__time += 1
-      self.__frame = self.__time // 10
+      self.__frame += 1
       time.sleep(0.01)
   def __checkPressedKey(self, key:int):
     match key:

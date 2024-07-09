@@ -6,3 +6,4 @@ class BaseStats:
   health:int
   power:int
   defense:int
+  exp:int

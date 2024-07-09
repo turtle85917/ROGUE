@@ -36,33 +36,24 @@ class Layer:
   def setPixelByPosition(self, position:Position, cell:Cell):
     self.__map[position.y][position.x] = cell
 
-  def writeText(self, txt:str, pos:tuple[int,int], color:int = 0):
+  def writeText(self, texts:list[tuple[str,int]], pos:tuple[int,int]):
     x = pos[0]
     y = pos[1]
-    for char in txt:
-      self.__map[y][x] = Cell(prop=char, color=color, isText=True)
-      x += 1
-      if x >= self.width: break
-      if char == "\n":
-        x = pos[0]
-        y += 1
-        if y >= self.height: break
-  def insertBeforeText(self, txt:str, line:int, color:int = 0):
-    last = 0
-    # 텍스트의 마지막 위치 구하기
-    for i in range(0, self.width):
-      if self.__map[line][i].isText:
-        last = i
-    # 바로 다음칸에 입력하기 위함
-    last += 1
-    # 텍스트 삽입
-    self.writeText(txt, (last, line), color)
+    for text, color in texts:
+      for char in text:
+        self.__map[y][x] = Cell(prop=char, color=color, isText=True)
+        x += 1
+        if x >= self.width: break
+        if char == "\n":
+          x = pos[0]
+          y += 1
+          if y >= self.height: break
 
   def load(self, cells:list[list[Cell]]):
     self.__map = cells
   def clear(self, row:int = -1):
     if row != -1:
-      for index in range(len(self.__map[row])):
+      for index in range(0, self.width):
         self.__map[row][index] = Layer.EMPTY
     else:
       self.fill(Layer.EMPTY)
@@ -78,6 +69,17 @@ class Layer:
         for x in range(self.width):
           if x >= left and left + width - 1 >= x:
             self.__map[y][x] = Layer.EMPTY
+  def drawLine(self, start:Position, end:Position, cell:Cell):
+    start_y = max(start.y, end.y)
+    end_y = min(start.y, end.y)
+    start_x = max(start.x, end.x)
+    end_x = min(start.x, end.x)
+    for y in range(0, self.height):
+      for x in range(0, self.width):
+        if start.x == end.x and x == start.x and start_y > y > end_y:
+          self.__map[y][x] = cell
+        if start.y == end.y and y == start.y and start_x > x > end_x:
+          self.__map[y][x] = cell
 
   @property
   def pixels(self)->list[list[Cell]]:
