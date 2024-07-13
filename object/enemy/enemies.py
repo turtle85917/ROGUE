@@ -6,10 +6,11 @@ class Bat(BaseEnemy):
   color = 4
   stats = BaseStats(
     level = 1,
-    health = 10,
+    maxHealth = 10,
     power = 2,
     defense = 1,
-    exp = 10
+    exp = 10,
+    penetrate = 0
   )
 
 class Slime(BaseEnemy):
@@ -18,10 +19,11 @@ class Slime(BaseEnemy):
   color = 37
   stats = BaseStats(
     level = 1,
-    health = 5,
+    maxHealth = 14,
     power = 1,
     defense = 0,
-    exp = 4
+    exp = 0,
+    penetrate = 0
   )
 
 enemies:list[BaseEnemy] = [Bat, Slime]

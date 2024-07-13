@@ -48,9 +48,6 @@ class Layer:
           x = pos[0]
           y += 1
           if y >= self.height: break
-
-  def load(self, cells:list[list[Cell]]):
-    self.__map = cells
   def clear(self, row:int = -1):
     if row != -1:
       for index in range(0, self.width):

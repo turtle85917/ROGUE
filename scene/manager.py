@@ -77,7 +77,7 @@ class SceneManager:
     self.changeScene(self.__defaultSceneIndex)
   def changeScene(self, sceneIndex:int):
     '''
-    씬으로 전환합니다.
+    씬을 전환합니다.
 
     @param sceneIndex 씬의 인덱스
     '''

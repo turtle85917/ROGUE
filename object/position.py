@@ -1,5 +1,5 @@
 from __future__ import annotations
-from math import floor
+from math import floor, sqrt
 
 class Position:
   __x:int
@@ -46,7 +46,7 @@ class Position:
 
   @property
   def magnitude(self)->int:
-    return (self.x + self.y) ** 2
+    return floor(sqrt((self.x + self.y) ** 2))
   @property
   def normalized(self)->Position:
     if self.magnitude == 0:

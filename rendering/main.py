@@ -3,7 +3,6 @@ from _types.CurseWindow import CursesWindow
 
 from rendering.types.cell import Cell
 from rendering.layer import Layer
-from rendering.utils import getDominantColor
 
 class Render:
   __layers:list[Layer]
@@ -49,19 +48,6 @@ class Render:
           else:
             result[y][x] = layer.getPixel(x, y)
     return result
-
-  def reverseLayer(self, layer:Layer)->Layer:
-    result = self.__newEmptyLayer(layer.width, layer.height)
-    pixel = getDominantColor(layer.pixels)
-    for y in range(layer.height):
-      for x in range(layer.width):
-        if layer.getPixel(x, y) != Layer.EMPTY:
-          result[y][x] = pixel
-        else:
-          result[y][x] = Layer.EMPTY
-    newLayer = Layer(layer.width, layer.height)
-    newLayer.load(result)
-    return newLayer
 
   def __newEmptyLayer(self, width:int, height:int)->list[list[Cell]]:
     return [[Layer.EMPTY for _ in range(width)] for _ in range(height)]

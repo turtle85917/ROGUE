@@ -11,7 +11,7 @@ class Stats(BaseStats):
     self.level = 1
     self.curse = 0
     self.money = 50
-    self.health = 40
+    self.maxHealth = 40
     self.power = 5
     self.defense = 1
     self.energy = 10

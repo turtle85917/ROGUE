@@ -1,4 +1,5 @@
 from typing import Callable
+from math import e, pow
 
 from object.position import Position
 
@@ -36,7 +37,7 @@ class Player:
     "attack-left": ["left"],
     "attack-right": ["right"],
     "pick-up-item": ["e"],
-    "exit": ["r"]
+    "exit": ["r", "enter"]
   }
   __movingMovement:list[str] = ["up", "down", "left", "right"]
 
@@ -62,10 +63,20 @@ class Player:
       # 콜백 함수
       if callback != None:
         callback()
-
   def getMovement(self, key)->str|None:
     keys = self.__mappingKeys if self.isDisarmed else self.__movementKeys
     for k, v in keys.items():
       if key in v:
         return k
     return None
+
+  def levelUp(self)->bool:
+    if self.stats.exp - self.__getExp(self.stats.level - 1) >= self.stats.nextExp:
+      self.stats.level += 1
+      self.stats.nextExp = self.__getExp(self.stats.level + 1)
+      return True
+    return False
+  def __getExp(self, level:int)->int:
+    if level == 0:
+      return 0
+    return round(pow(40 * e, 0.3 * level))
