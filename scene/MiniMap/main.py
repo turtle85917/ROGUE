@@ -19,9 +19,11 @@ class MiniMap(Scene):
   # 디버깅용
   __debugging__ = False
 
-  # BSP 알고리즘에 사용할 자원
+  # 분할 비율
   __minimum_divide_rate = 0.39
   __maximum_divide_rate = 0.61
+
+  __isCreated:bool = False
 
   __max_depth = 0
 
@@ -38,20 +40,25 @@ class MiniMap(Scene):
     self.sceneName = "MiniMap"
 
   def render(self):
-    # 루트 생성하기
-    self.__max_depth = MAX_DEPTH
-    treeNode = Node(WIDTH, HEIGHT - 1, 0, 0)
-    if self.__debugging__:
-      drawNode(self.manager.layers[LayerOrder.Roads], treeNode)
+    if self.__isCreated:
+      self.__activeRoom = self.__latestRoom = self.manager.getGlobalVariable("inRoom")
+      self.manager.player.enterRoom(self.__activeRoom)
+    else:
+      # 루트 생성하기
+      self.__max_depth = MAX_DEPTH
+      treeNode = Node(WIDTH, HEIGHT - 1, 0, 0)
+      if self.__debugging__:
+        drawNode(self.manager.layers[LayerOrder.Roads], treeNode)
 
-    # 공간 분할하기
-    self.__divideMap(treeNode, 0)
-    self.__createRoom(treeNode, 0)
-    self.__generateRoad(treeNode, 0)
-    self.__spawnDoors(treeNode, 0)
-    self.__spawnDoorsFromBywayRooms(treeNode, 0)
+      # 공간 분할하기
+      self.__divideMap(treeNode, 0)
+      self.__createRoom(treeNode, 0)
+      self.__generateRoad(treeNode, 0)
+      self.__spawnDoors(treeNode, 0)
+      self.__spawnDoorsFromBywayRooms(treeNode, 0)
 
-    self.__spawnPlayer()
+      self.__spawnPlayer()
+      self.__isCreated = True
     self.__printMap()
   def update(self):
     if self.manager.pressedKey == "enter" and self.__activeRoom != None:

@@ -1,5 +1,5 @@
 from random import randint, choice
-from math import ceil, floor
+from math import ceil
 import time
 import uuid
 
@@ -12,19 +12,21 @@ from object.enemy.enemies import enemies, Slime
 from rendering.types.prop import Prop
 from rendering.types.cell import Cell
 from rendering.layer import Layer
-from rendering.utils import prop2cell
 
 from scene.schema import Scene
 from scene.manager import SceneManager
 from scene.constants import WIDTH, HEIGHT
 
 from scene.MiniMap.node import BinaryRoom, Node
-from scene.MiniMap.utils import drawNode
 from scene.MiniMap.types.enemy import Enemy
 
 from scene.Room.types.bubble import Bubble
 from scene.Room.types.timing import Timing
 from scene.Room.types.order import LayerOrder
+
+from object.utils import getSpawnPos
+from rendering.utils import prop2cell
+from scene.MiniMap.utils import drawNode
 
 class Room(Scene):
   __room:BinaryRoom
@@ -74,6 +76,8 @@ class Room(Scene):
     background = Node(WIDTH, HEIGHT - 2, 0, 0)
     drawNode(self.manager.layers[LayerOrder.Background], background)
 
+    self.__isClear = False
+
     self.__room = self.manager.getGlobalVariable("inRoom")
     # 들어온 방 설정하기
     ratio = self.__room.width / self.__room.height
@@ -93,12 +97,7 @@ class Room(Scene):
     if self.__room.width *  self.__room.height > 60:
       enemyCount = randint(4, 14)
     for _ in range(enemyCount):
-      position = Position(0, 0)
-      while True:
-        position = Position(randint(self.__room.left + 1, self.__room.right - 1), randint(self.__room.top + 1, self.__room.bottom - 1))
-        overlaps = list(filter(lambda x:x.position == position, self.__room.enemies))
-        if len(overlaps) == 0 and self.manager.player.position != position:
-          break
+      position = getSpawnPos(self.manager, self.__room)
       enemy = enemies[randint(0, len(enemies) - 1)]
       self.__room.enemies.append(Enemy(uuid=uuid.uuid4(), enemy=enemy(), health=enemy.stats.maxHealth, position=position))
       self.manager.layers[LayerOrder.Objects].setPixelByPosition(position, enemy.cell)
@@ -234,10 +233,10 @@ class Room(Scene):
 
         stats = BaseStats(
           level = data.enemy.stats.level,
-          maxHealth = floor(data.enemy.stats.maxHealth * 0.8),
-          power = data.enemy.stats.power * 1.1,
+          maxHealth = round(data.enemy.stats.maxHealth * 0.7),
+          power = round(data.enemy.stats.power * 1.1),
           defense = data.enemy.stats.defense + 1,
-          exp = data.enemy.stats.exp + 2,
+          exp = data.enemy.stats.exp + 1,
           penetrate = data.enemy.stats.penetrate + 1
         )
 
