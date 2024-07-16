@@ -45,6 +45,7 @@ class Room(Scene):
   # 로그
   __log:list[tuple[str, int]] = []
   __loggedAt:int = 0
+  __notGoneLog:bool = False
 
   __enemyQueues:list[Enemy] = []
 
@@ -74,7 +75,7 @@ class Room(Scene):
 
   def render(self):
     background = Node(WIDTH, HEIGHT - 2, 0, 0)
-    drawNode(self.manager.layers[LayerOrder.Background], background)
+    drawNode(self.manager.layers[LayerOrder.Background], background, border_cell=Cell(prop=Prop.Wall, color=240))
 
     self.__isClear = False
 
@@ -90,7 +91,7 @@ class Room(Scene):
     self.__room.repos(self.__height // 2 - self.__room.height // 2 + 1, WIDTH // 2 - self.__room.width // 2 + 1)
 
     # 방 그리기
-    drawNode(self.manager.layers[LayerOrder.Rooms], self.__room, prop2cell(Prop.Room), prop2cell(Prop.Wall))
+    drawNode(self.manager.layers[LayerOrder.Rooms], self.__room, prop2cell(Prop.Cell), prop2cell(Prop.Wall))
 
     # 적 놓기
     enemyCount = randint(2, 5) # 2 ~ 5 적 배치
@@ -147,6 +148,7 @@ class Room(Scene):
           pow = self.manager.player.stats.power
           data.health -= pow
           self.__log = [(f"Attacked {data.enemy.id}! ", 0), (f"HP -{pow} ", 5)]
+          self.__notGoneLog = False
           self.__bubbleQueues.append(bubble)
           # 적이 죽었는지 확인
           if data.health <= 0:
@@ -156,6 +158,7 @@ class Room(Scene):
             self.__log.append((f"EXP -{data.enemy.stats.exp}", 11))
             self.manager.player.stats.exp += data.enemy.stats.exp
             self.__processKilledEnemy(data)
+            self.__notGoneLog = True
           self.__loggedAt = time.time()
           break
       # 움직임 제한
@@ -188,16 +191,17 @@ class Room(Scene):
       if isLevelUp:
         self.__log = [("Congratulation! Level Up! ", 0), (f"Lv: {self.manager.player.stats.level} ", 230), (f"Exp: {self.manager.player.stats.exp} ", 195), (f"Next Exp: {self.manager.player.stats.nextExp}", 196)]
         self.__loggedAt = time.time()
+        self.__notGoneLog = True
 
     # 출력
     self.__printScreen()
 
   def __printScreen(self):
     self.manager.layers[LayerOrder.Player].setPixelByPosition(self.manager.player.position, Layer.PLAYER)
-    self.manager.layers[LayerOrder.UI].writeText([(f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.maxHealth: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}", 0)], (0, 41))
+    self.manager.layers[LayerOrder.UI].writeText([(f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}", 0)], (0, 41))
     if self.__isClear:
       self.manager.layers[LayerOrder.UI].writeText([("To exit the room press 'Enter'", 0)], (0, 40))
-    elif time.time() - self.__loggedAt < 1.6:
+    elif time.time() - self.__loggedAt < 1.6 or self.__notGoneLog:
       self.manager.layers[LayerOrder.UI].writeText(self.__log, (0, 40))
 
   def __shoutBubble(self, direction:Direction):
@@ -217,7 +221,7 @@ class Room(Scene):
             self.manager.layers[LayerOrder.Effects].setPixelByPosition(data.position + Position(0, -1), Cell(prop='!', color=197))
             return
           self.manager.layers[LayerOrder.Effects].drawLine(data.position, self.manager.player.position, Cell(prop=Prop.Light, color=choice(self.__light_colors)))
-          if not self.checkCooldown(data.uuid, 6.):
+          if not self.checkCooldown(data.uuid, 6.5):
             self.setCooldown(data.uuid)
         else:
           self.removeCooldown(data.uuid)
@@ -243,13 +247,11 @@ class Room(Scene):
         slime1.stats = stats
         slime2.stats = stats
 
-        dir1 = choice(self.__compassDirections)
-        dir2 = choice(self.__compassDirections)
-        while dir2 == dir1:
-          dir2 = choice(self.__compassDirections)
+        position1 = getSpawnPos(self.manager, self.__room, self.__compassDirections, data.position)
+        position2 = getSpawnPos(self.manager, self.__room, self.__compassDirections, data.position, lambda pos:pos != position1)
 
-        self.__room.enemies.append(Enemy(uuid=uuid.uuid4(), enemy=slime1, health=slime1.stats.maxHealth, position=data.position + dir1))
-        self.__room.enemies.append(Enemy(uuid=uuid.uuid4(), enemy=slime2, health=slime2.stats.maxHealth, position=data.position + dir2))
+        self.__room.enemies.append(Enemy(uuid=uuid.uuid4(), enemy=slime1, health=slime1.stats.maxHealth, position=position1))
+        self.__room.enemies.append(Enemy(uuid=uuid.uuid4(), enemy=slime2, health=slime2.stats.maxHealth, position=position2))
 
   def checkCooldown(self, uuid:str, expired:int)->bool:
     cooldown = list(filter(lambda x:x.uuid == uuid, self.__cooldown_queues))

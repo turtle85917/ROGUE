@@ -265,7 +265,7 @@ class MiniMap(Scene):
     self.manager.layers[LayerOrder.UI].clear()
     if self.__activeRoom != None:
       self.manager.layers[LayerOrder.UI].writeText([("To enter the room press 'Enter'", 0)], (0, 40))
-    self.manager.layers[LayerOrder.UI].writeText([(f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.stats.maxHealth: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}", 0)], (0, 41))
+    self.manager.layers[LayerOrder.UI].writeText([(f"Lv. {self.manager.player.stats.level: <10} Curse {self.manager.player.stats.curse: <10} $ {self.manager.player.stats.money: <5} Hp. {self.manager.player.health: <5} Pw. {self.manager.player.stats.power: <5} Def. {self.manager.player.stats.defense: <5} Energy {self.manager.player.stats.energy: <5} Xp {self.manager.player.stats.exp} / {self.manager.player.stats.nextExp}", 0)], (0, 41))
 
   # 게임 맵 초기화
   def __printMap(self):

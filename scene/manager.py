@@ -40,6 +40,7 @@ class SceneManager:
 
     self.layers = []
     self.player = Player()
+    self.player.health = self.player.stats.maxHealth
 
     self.__window = curses.initscr()
     self.__render = Render(self.__window)

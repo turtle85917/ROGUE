@@ -17,6 +17,7 @@ class Player:
     "right": Position(1, 0)
   }
 
+  health:int
   stats:Stats
   isInRoom:bool
   isDisarmed:bool # 방 안으로 들어온 상태인지
